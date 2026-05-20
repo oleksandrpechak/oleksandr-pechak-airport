@@ -15,7 +15,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from django.http import JsonResponse
+
+
+def home(request):
+    return JsonResponse({"message": "API is running"})
+
 
 urlpatterns = [
+    path("", home),
     path('admin/', admin.site.urls),
+    # Spectacular
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema')),
 ]
