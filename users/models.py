@@ -2,6 +2,7 @@ from django.db import models
 # my code
 from django.contrib.auth.models import AbstractUser
 
+
 class CustomUser(AbstractUser):
     class Roles(models.TextChoices):
         ADMIN = "ADMIN", "Admin"

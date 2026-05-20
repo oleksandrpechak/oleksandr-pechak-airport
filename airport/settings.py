@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'users', # NEW : Implementation of CustomerUser
+    'locations',
+    'aviation',
+    'flights',
 ]
 
 MIDDLEWARE = [
