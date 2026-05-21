@@ -26,14 +26,6 @@ class Airport(models.Model):
     city = models.ForeignKey(
         "locations.City", on_delete=models.CASCADE
     )
-    country = models.ForeignKey(
-        "locations.Country", on_delete=models.CASCADE
-    )
-
-class AirportAirline(models.Model):
-    airport_name = models.ForeignKey(
-        "Airport", on_delete=models.CASCADE
-    )
-    airline_name = models.ForeignKey(
-        "Airline", on_delete=models.CASCADE
+    airline = models.ManyToManyField(
+        "Airline", related_name="airports"
     )
