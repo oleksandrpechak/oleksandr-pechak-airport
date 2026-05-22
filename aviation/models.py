@@ -1,24 +1,59 @@
 from django.db import models
+from django.db.models import Sum
 
 
 class Airplane(models.Model):
-    airplane_brand = models.CharField(max_length=50)
-    airplane_model = models.CharField(max_length=100)
+    brand = models.CharField(max_length=50)
+    model = models.CharField(max_length=100)
+    seats = models.PositiveIntegerField()
 
-class Airline(models.Model):
-    airline_name = models.CharField(max_length=50)
-    is_active = models.BooleanField(default=True)
-    airplane_capacity = models.PositiveIntegerField()
-    founded_year = models.IntegerField(null=True, blank=True)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["brand", "model"],
+                name="unique_brand_model"
+            )
+        ]
+
+    @property
+    def is_large_aircraft(self):
+        return self.seats > 250
+
+    def __str__(self):
+        return self.brand + " " + self.model
 
 class Fleet(models.Model):
-    airline_name = models.ForeignKey(
+    airline = models.ForeignKey(
         "Airline", on_delete=models.CASCADE
         )
-    airplane_name = models.ForeignKey(
+    airplane = models.ForeignKey(
         "Airplane", on_delete=models.CASCADE
     )
     fleet_size = models.PositiveIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["airline", "airplane"],
+                name = "unique_airline_airplane"
+            )
+        ]
+
+
+class Airline(models.Model):
+    name = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+    founded_year = models.IntegerField(null=True, blank=True)
+
+    @property
+    def total_airplanes(self):
+        return self.fleets.aggregate(
+            Sum("fleet_size")
+        )["total"] or 0
+
+    def __str__(self):
+        return self.name 
+
 
 class Airport(models.Model):
     airport_name = models.CharField(max_length=200)
@@ -29,3 +64,5 @@ class Airport(models.Model):
     airline = models.ManyToManyField(
         "Airline", related_name="airports"
     )
+    def __str__(self):
+        return self.airport_name
