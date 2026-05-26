@@ -15,6 +15,10 @@ class Flight(models.Model):
     airline_name = models.ForeignKey(
         "aviation.Airline", on_delete=models.PROTECT
     )
+    airplane_seats = models.ForeignKey(
+        "aviation.Airplane", on_delete=models.PROTECT,
+        related_name="flight_seats"
+    )
     class FlightStatus(models.TextChoices):
         SCHEDULED = "SCH", "scheduled"
         BOARDING = "BRG", "boarding"
@@ -38,8 +42,8 @@ class Ticket(models.Model):
         max_digits=8,
         decimal_places=2
     )
-
     class TicketStatus(models.TextChoices):
+        AVAILABLE = "AVB", "available"
         BOOKED = "BKD", "booked"
         USED = "USE", "used"
         PAID = "PAD", "paid"
@@ -47,5 +51,5 @@ class Ticket(models.Model):
     ticket_status = models.CharField(
         max_length=3,
         choices=TicketStatus.choices,
-        default=TicketStatus.BOOKED
+        default=TicketStatus.AVAILABLE
     )
