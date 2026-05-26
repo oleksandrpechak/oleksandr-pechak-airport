@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Flight(models.Model):
+    flight_number = models.CharField(max_length=5)
     departure_airport = models.ForeignKey(
         "aviation.Airport", on_delete=models.PROTECT,
         related_name="departures"
@@ -12,12 +13,13 @@ class Flight(models.Model):
     )
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
+    available_tickets = models.PositiveIntegerField()
+    ticket_price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2
+        )
     airline_name = models.ForeignKey(
         "aviation.Airline", on_delete=models.PROTECT
-    )
-    airplane_seats = models.ForeignKey(
-        "aviation.Airplane", on_delete=models.PROTECT,
-        related_name="flight_seats"
     )
     class FlightStatus(models.TextChoices):
         SCHEDULED = "SCH", "scheduled"
@@ -32,18 +34,14 @@ class Flight(models.Model):
     )
 
 class Ticket(models.Model):
-    flight_id = models.ForeignKey(
+    flight_number = models.ForeignKey(
         "Flight", on_delete=models.PROTECT
     )
-    client_id = models.ForeignKey(
+    client = models.ForeignKey(
         "users.CustomUser", on_delete=models.CASCADE
     )
-    ticket_price = models.DecimalField(
-        max_digits=8,
-        decimal_places=2
-    )
+    seat = models.CharField(max_length=10)
     class TicketStatus(models.TextChoices):
-        AVAILABLE = "AVB", "available"
         BOOKED = "BKD", "booked"
         USED = "USE", "used"
         PAID = "PAD", "paid"
@@ -51,5 +49,12 @@ class Ticket(models.Model):
     ticket_status = models.CharField(
         max_length=3,
         choices=TicketStatus.choices,
-        default=TicketStatus.AVAILABLE
+        default=TicketStatus.BOOKED
     )
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['flight', 'seat'], 
+                name='unique_flight_id_seat'
+            )
+        ]

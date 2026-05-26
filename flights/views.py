@@ -1,11 +1,27 @@
 from .models import Flight, Ticket
-from .serializers import FlightSerializer, TicketSerializer
+from .serializers import FlightSerializer, TicketSerializer, TicketCreateSerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
+from django.db import transaction
 
+class BookTicketView(APIView):
+    def post(self, request):
+        serializer = TicketCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                flight = Flight.objects.select_for_update().get(
+                    id=serializer.validated_data['flight_id']
+                )
+                if flight.available_tickets <= 0:
+                    return Response({"error": "Flight is full"}, status=status.HTTP_400_BAD_REQUEST)
+                serializer.save()
+                flight.available_tickets -= 1
+                flight.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FlightList(APIView):
     """

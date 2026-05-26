@@ -10,11 +10,11 @@ urlpatterns = [
     path("airlines/", views.AirlineList.as_view()),
     path("airliens<int:pk>/", views.AirlineDetail.as_view()),
 
-    # path("airplanes/", views.List.as_view()),
-    # path("airplanes<int:pk>/", views.AirlineDetail.as_view()),
+    path("fleets/", views.FleetList.as_view()),
+    path("fleets<int:pk>/", views.FleetDetail.as_view()),
     
-    # path("airplanes/", views.AirplaneList.as_view()),
-    # path("airplanes<int:pk>/", views.AirlineDetail.as_view()),
+    path("airports/", views.AirportList.as_view()),
+    path("airports<int:pk>/", views.AirportDetail.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
