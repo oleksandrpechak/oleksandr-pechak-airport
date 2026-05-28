@@ -1,33 +1,48 @@
 from rest_framework import viewsets
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Country, City
 from .serializers import CountrySerializer, CitySerializer
+from .filters import CountryFilter
 
 
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
 
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'country': ['exact', 'istartswith'],
-        'code': ['exact', 'icontains']
-    }
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    ]
+    filterset_class = CountryFilter
+    search_fields = [
+        "country",
+        "code",
+    ]
 
+    ordering_fields = [
+        "country",
+        "code",
+    ]
 
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
 
+    filter_backends = [
+        SearchFilter,
+        OrderingFilter,
+    ]
+    search_fields = [
+        "city",
+        "country",
+    ]
 
-    def get_queryset(self):
-        queryset = self.queryset.all()
+    ordering_fields = [
+        "city",
+        "country",
+    ]
 
-        city = self.request.query_params.get("city")
-        country = self.request.query_params.get("country")
-        if city:
-            queryset = queryset.filter(city__icontains=city)
-        if country:
-            queryset = queryset.filter(country__id=country)
-        return queryset
+
 

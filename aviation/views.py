@@ -1,5 +1,8 @@
-from .models import Airplane, Airline, Airport, Fleet
-from .serializers import AirplaneSerializer, AirlineSerializer, AirportSerializer, FleetSerializer
+from .models import Airplane, Airline, Airport
+from .serializers import AirplaneSerializer, AirlineSerializer, AirportSerializer
+from .filters import AirplaneFilter, AirlineFilter, AirportFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 
 
@@ -7,41 +10,54 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
     serializer_class = AirplaneSerializer
 
-    def get_queryset(self):
-        queryset = Airplane.objects.all()
-        brand = self.request.query_params.get("brand")
-        model = self.request.query_params.get("model")
-        if brand:
-            queryset = queryset.filter(airplane_brand__icontains=brand)
-        if model:
-            queryset = queryset.filter(airplane_model__icontains=model)
-        return queryset
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    ]
+    filterset_class = AirplaneFilter
+    search_fields = [
+        "brand", "model", "rows", "seats_per_row"
+    ]
+
+    ordering_fields = [
+        "brand", "model", "rows", "seats_per_row"
+    ]
 
 
 class AirlineViewSet(viewsets.ModelViewSet):
     queryset = Airline.objects.all()
     serializer_class = AirlineSerializer
-    
-    def get_queryset(self):
-        queryset = Airline.objects.all()
-        name = self.request.query_params.get("name")
-        is_active = self.request.query_params.get("is_active")
-        founded_year = self.request.query_params.get("founded_year")
 
-        if name:
-            queryset = queryset.filter(airline_name__icontains=name)
-        if is_active:
-            queryset = queryset.filter(airline_is_active__icontains=is_active)
-        if founded_year:
-            queryset = queryset.filter(airline_founded_year__icontains=founded_year)
-        return queryset
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    ]
+    filterset_class = AirlineFilter
+    search_fields = [
+        "name", "is_active", "founded_year"
+    ]
 
-class FleetViewSet(viewsets.ModelViewSet):
-    queryset = Fleet.objects.all()
-    serializer_class = FleetSerializer
-
+    ordering_fields = [
+        "name", "is_active", "founded_year"
+    ]
 
 class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
+
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    ]
+    filterset_class = AirportFilter
+    search_fields = [
+        "name", "model", "rows", "seats_per_row"
+    ]
+
+    ordering_fields = [
+        "brand", "model", "rows", "seats_per_row"
+    ]
  
