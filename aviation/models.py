@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Sum
+
 
 
 class Airplane(models.Model):
@@ -14,11 +14,6 @@ class Airplane(models.Model):
                 name="unique_brand_model"
             )
         ]
-
-    @property
-    def is_large_aircraft(self):
-        return self.seats > 250
-
     def __str__(self):
         return self.brand + " " + self.model
 
@@ -44,12 +39,6 @@ class Airline(models.Model):
     name = models.CharField(max_length=50)
     is_active = models.BooleanField(default=True)
     founded_year = models.IntegerField(null=True, blank=True)
-
-    @property
-    def total_airplanes(self):
-        return self.fleets.aggregate(
-            Sum("fleet_size")
-        )["total"] or 0
 
     def __str__(self):
         return self.name 

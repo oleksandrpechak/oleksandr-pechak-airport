@@ -1,14 +1,9 @@
 from .models import Airplane, Airline, Airport, Fleet
 from .serializers import AirplaneSerializer, AirlineSerializer, AirportSerializer, FleetSerializer
-from rest_framework import mixins
-from rest_framework import generics
+from rest_framework import viewsets
 
 
-class AirplaneList(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    generics.GenericAPIView
-):
+class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
     serializer_class = AirplaneSerializer
 
@@ -16,59 +11,37 @@ class AirplaneList(
         queryset = Airplane.objects.all()
         brand = self.request.query_params.get("brand")
         model = self.request.query_params.get("model")
-        # seats = self.request.query_params.get("seats")
         if brand:
-            queryset = queryset.filter(
-                airplane_brand__icontains=brand
-            )
+            queryset = queryset.filter(airplane_brand__icontains=brand)
         if model:
-            queryset = queryset.filter(
-                airplane_model__icontains=model
-            )
+            queryset = queryset.filter(airplane_model__icontains=model)
         return queryset
 
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-    
-class AirplaneDetail(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    generics.GenericAPIView,
-):
-    queryset = Airplane.objects.all()
-    serializer_class = AirplaneSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
-    
-class AirlineList(generics.ListCreateAPIView):
+class AirlineViewSet(viewsets.ModelViewSet):
     queryset = Airline.objects.all()
     serializer_class = AirlineSerializer
-class AirlineDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Airline.objects.all()
-    serializer_class = AirlineSerializer 
+    
+    def get_queryset(self):
+        queryset = Airline.objects.all()
+        name = self.request.query_params.get("name")
+        is_active = self.request.query_params.get("is_active")
+        founded_year = self.request.query_params.get("founded_year")
 
-class FleetList(generics.ListCreateAPIView):
+        if name:
+            queryset = queryset.filter(airline_name__icontains=name)
+        if is_active:
+            queryset = queryset.filter(airline_is_active__icontains=is_active)
+        if founded_year:
+            queryset = queryset.filter(airline_founded_year__icontains=founded_year)
+        return queryset
+
+class FleetViewSet(viewsets.ModelViewSet):
     queryset = Fleet.objects.all()
     serializer_class = FleetSerializer
-class FleetDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Fleet.objects.all()
-    serializer_class = FleetSerializer
 
-class AirportList(generics.ListCreateAPIView):
+
+class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
-class AirportDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Airport.objects.all()
-    serializer_class = AirportSerializer   
+ 

@@ -22,39 +22,86 @@ class Flight(models.Model):
         "aviation.Airline", on_delete=models.PROTECT
     )
     class FlightStatus(models.TextChoices):
-        SCHEDULED = "SCH", "scheduled"
-        BOARDING = "BRG", "boarding"
-        DEPARTED = "DEP", "departed"
-        DELAYED = "DLD", "delayed"
-        CANCELLED = "CND", "cancelled"
+        SCHEDULED = "SCHEDULED", "scheduled"
+        BOARDING = "BOARDING", "boarding"
+        DEPARTED = "DEPARTED", "departed"
+        DELAYED = "DELAYED", "delayed"
+        CANCELLED = "CANCELLED", "cancelled"
     flight_status = models.CharField(
-        max_length=3,
+        max_length=10,
         choices=FlightStatus.choices,
         default=FlightStatus.SCHEDULED
     )
 
-class Ticket(models.Model):
+
+class AirplaneSeat(models.Model):
     flight_number = models.ForeignKey(
-        "Flight", on_delete=models.PROTECT
+        "Flight",
+        on_delete=models.PROTECT,
+        related_name="tickets"
     )
-    client = models.ForeignKey(
+    row = models.PositiveIntegerField(min_value=1)
+    seat = models.PositiveIntegerField(min_value=1)
+
+    class ClassType(models.TextChoices):
+        PREMIUM = "PREMIUM", "premium"
+        BASIC = "BASIC", "basic"
+
+    class_type = models.CharField(
+        max_length=7,
+        choices=ClassType.choices,
+        default=ClassType.BASIC
+    )
+
+
+class Booking(models.Model):
+    user_id = models.ForeignKey(
+        "users.CustomUser",
+        on_delete=models.CASCADE
+    )
+
+    class BookingStatus(models.TextChoices):
+        PENDING = "PENDING", "pending"
+        CONFIRMED = "CONFIRMED", "confirmed"
+        CANCELLED = "CANCELLED", "cancelled"
+        EXPIRED = "EXPIRED", "expired"
+    status = models.CharField(
+        max_length=10,
+        choices=BookingStatus.choices,
+        default=BookingStatus.PENDING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    
+
+
+
+
+class Ticket(models.Model):
+    booking = models.ForeignKey(
+        "Booking",
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
+    flight_number = models.ForeignKey(
+        "Flight",
+        on_delete=models.PROTECT,
+        related_name="tickets"
+
+    )
+    client_name = models.ForeignKey(
         "users.CustomUser", on_delete=models.CASCADE
     )
-    seat = models.CharField(max_length=10)
+    airplane_seat = models.ForeignKey(
+        "AirplaneSeat", on_delete=models.CASCADE
+    )
     class TicketStatus(models.TextChoices):
-        BOOKED = "BKD", "booked"
-        USED = "USE", "used"
-        PAID = "PAD", "paid"
-        CANCELLED = "CND", "cancelled"
+        BOOKED = "BOOKED", "booked"
+        USED = "USED", "used"
+        PAID = "PAID", "paid"
+        CANCELLED = "CANCELLED", "cancelled"
     ticket_status = models.CharField(
-        max_length=3,
+        max_length=10,
         choices=TicketStatus.choices,
         default=TicketStatus.BOOKED
     )
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['flight', 'seat'], 
-                name='unique_flight_id_seat'
-            )
-        ]

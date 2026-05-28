@@ -1,13 +1,13 @@
-from django.urls import path
-from rest_framework.urlpatterns import format_suffix_patterns
-from flights import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import FlightViewSet, TicketViewSet
+
+router = DefaultRouter()
+
+router.register(r'flights', FlightViewSet, basename='flight')
+router.register(r'tickets', TicketViewSet,basename='ticket')
 
 
 urlpatterns = [
-    path("flights/", views.FlightList.as_view()),
-    path("flights/<int:pk>/", views.FlightDetail.as_view()),
-    path("tickets/", views.TicketList.as_view()),
-    path("flights/<int:pk>/", views.TicketDetail.as_view()),
+    path('', include(router.urls)),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

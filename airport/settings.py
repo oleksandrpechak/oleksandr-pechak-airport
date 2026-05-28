@@ -38,9 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
+    'django_filters',
+
 
     'users', # NEW : Implementation of CustomerUser
     'locations',
