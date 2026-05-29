@@ -1,6 +1,6 @@
 import django_filters
 
-from .models import Airline, Airplane, Airport
+from .models import Airline, Airplane, Airport, AirplaneSeat
 
 class AirplaneFilter(django_filters.FilterSet):
     class Meta:
@@ -20,4 +20,10 @@ class AirportFilter(django_filters.FilterSet):
         model = Airport
         fields = {
             "iata_code": ["iexact"],
+        }
+class AirplaneSeatFilter(django_filters.FilterSet):
+    class Meta:
+        model = AirplaneSeat
+        fields = {
+            "class_type": ["iexact"]
         }

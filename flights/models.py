@@ -1,5 +1,11 @@
 from django.db import models
 
+class FlightStatus(models.TextChoices):
+    SCHEDULED = "SCHEDULED", "scheduled"
+    BOARDING = "BOARDING", "boarding"
+    DEPARTED = "DEPARTED", "departed"
+    DELAYED = "DELAYED", "delayed"
+    CANCELLED = "CANCELLED", "cancelled"
 
 class Flight(models.Model):
     flight_number = models.CharField(max_length=5)
@@ -18,77 +24,32 @@ class Flight(models.Model):
         decimal_places=2
         )
     airplane = models.ForeignKey(
-        "aviation.Airplane", on_delete=models.PROTECT
+        "aviation.FleetItem", on_delete=models.PROTECT
     )
     airline_name = models.ForeignKey(
         "aviation.Airline", on_delete=models.PROTECT
     )
-    class FlightStatus(models.TextChoices):
-        SCHEDULED = "SCHEDULED", "scheduled"
-        BOARDING = "BOARDING", "boarding"
-        DEPARTED = "DEPARTED", "departed"
-        DELAYED = "DELAYED", "delayed"
-        CANCELLED = "CANCELLED", "cancelled"
     flight_status = models.CharField(
         max_length=10,
         choices=FlightStatus.choices,
         default=FlightStatus.SCHEDULED
     )
     created_at = models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
         return f"{self.departure_airport} >> {self.arrival_airport}"
 
 
-
-class AirplaneSeat(models.Model):
-    flight_number = models.ForeignKey(
-        "Flight",
-        on_delete=models.PROTECT,
-        related_name="seats"
-    )
-    row = models.PositiveIntegerField()
-    seat = models.PositiveIntegerField()
-
-    class ClassType(models.TextChoices):
-        PREMIUM = "PREMIUM", "premium"
-        BASIC = "BASIC", "basic"
-
-    class_type = models.CharField(
-        max_length=7,
-        choices=ClassType.choices,
-        default=ClassType.BASIC
-    )
-    class SeatStatus(models.TextChoices):
-        AVAILABLE = "AVAILABLE", "available"
-        RESERVED = "RESERVED", "reserved"
-        SOLD = "SOLD", "sold"
-
-    status = models.CharField(
-        max_length=20,
-        choices=SeatStatus.choices,
-        default=SeatStatus.AVAILABLE
-    )
-    price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2
-    )
-
-    class Meta:
-        unique_together = ("flight_number", "row", "seat")
-
+class BookingStatus(models.TextChoices):
+    PENDING = "PENDING", "pending"
+    CONFIRMED = "CONFIRMED", "confirmed"
+    CANCELLED = "CANCELLED", "cancelled"
 
 class Booking(models.Model):
     user_id = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.CASCADE
     )
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    class BookingStatus(models.TextChoices):
-        PENDING = "PENDING", "pending"
-        CONFIRMED = "CONFIRMED", "confirmed"
-        CANCELLED = "CANCELLED", "cancelled"
     status = models.CharField(
         max_length=10,
         choices=BookingStatus.choices,
@@ -98,9 +59,21 @@ class Booking(models.Model):
         max_digits=10,
         decimal_places=2
     )
+    created_at = models.DateTimeField(auto_now_add=True)
 
+
+class TicketStatus(models.TextChoices):
+    BOOKED = "BOOKED", "booked"
+    USED = "USED", "used"
+    PAID = "PAID", "paid"
+    CANCELLED = "CANCELLED", "cancelled"
 
 class Ticket(models.Model):
+    flight_number = models.ForeignKey(
+        "flights.Flight",
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
     booking = models.ForeignKey(
         "Booking",
         on_delete=models.CASCADE,
@@ -110,15 +83,21 @@ class Ticket(models.Model):
         "users.CustomUser", on_delete=models.CASCADE
     )
     flight_seat = models.OneToOneField(
-        "AirplaneSeat", on_delete=models.CASCADE
+        "aviation.AirplaneSeat", on_delete=models.CASCADE
     )
-    class TicketStatus(models.TextChoices):
-        BOOKED = "BOOKED", "booked"
-        USED = "USED", "used"
-        PAID = "PAID", "paid"
-        CANCELLED = "CANCELLED", "cancelled"
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
     ticket_status = models.CharField(
         max_length=10,
         choices=TicketStatus.choices,
         default=TicketStatus.BOOKED
     )
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['flight_number','flight_seat'],
+                name="unique_ticket"
+                )
+        ]
