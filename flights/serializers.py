@@ -1,16 +1,13 @@
 from rest_framework import serializers
-from .models import Flight, Ticket, AirplaneSeat, Booking
+from .models import Flight, Ticket, Booking
 
 
 class FlightSerializer(serializers.ModelSerializer):
     class Meta:
         model = Flight
-        fields = [
-            "id", "flight_number", "departure_airport", "arrival_airport",
-            "departure_time", "arrival_time", "ticket_price", "airplane", "airline_name",
-            "flight_status", "created_at"
-            ]
-    
+        fields = '__all__'
+        read_only_fields = ['id', 'flight_status', 'created_at']
+        
     def validate(self,attrs):
         """
         The main coordinator.
@@ -20,6 +17,8 @@ class FlightSerializer(serializers.ModelSerializer):
         self._validate_timestamps(attrs, errors)
         # rule 2
         self._validate_airports(attrs, errors)
+        # rule 3
+        self._validate_fleet_item(attrs, errors)
 
 
         if errors:
@@ -38,23 +37,23 @@ class FlightSerializer(serializers.ModelSerializer):
         if dep and arr and dep == arr:
             errors['arrival_airport'] = "Arrival airport and departure airport cannot be the same."
 
+    def _validate_fleet_item(self, attrs, errors):
+        fleet_item = attrs.get("fleet_item")
+        airline = attrs.get('airline_name')
+        if fleet_item.airline != airline:
+            errors['fleet_item'] = "Fleet item have to reference to the same airline as the flight"
+
 
 class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
         fields = [
-            "id", "flight_seat", "passenger_name",
-            "seat", "ticket_status"
+            "id", "flight_number", "booking", "passenger_name", "flight_seat",
+            "price", "ticket_status"
         ]
         read_only_fields = ["id", "ticket_status"]
     
-
-
-class AirplaneSeatSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AirplaneSeat
-        fields = ["id", "flight_number", "row", "seat", "class_type", "status", "price" ]
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:

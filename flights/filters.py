@@ -1,6 +1,6 @@
 import django_filters
 from django.db.models import Count, Q
-from .models import Flight, AirplaneSeat, Booking, Ticket
+from .models import Flight, Booking, Ticket
 
 class FlightFilter(django_filters.FilterSet):
     class Meta:
@@ -37,14 +37,6 @@ class FlightFilter(django_filters.FilterSet):
 
         return queryset
     
-class AirplaneSeatFilter(django_filters.FilterSet):
-    class Meta:
-        model = AirplaneSeat
-        fields = {
-            "status": ["iexact"],
-            "class_type": ["iexact"]
-        }
-
 class BookingFilter(django_filters.FilterSet):
     class Meta:
         model = Booking
