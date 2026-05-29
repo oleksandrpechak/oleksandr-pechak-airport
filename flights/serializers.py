@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 from .models import Flight, Ticket, AirplaneSeat, Booking
 
 
@@ -8,8 +7,8 @@ class FlightSerializer(serializers.ModelSerializer):
         model = Flight
         fields = [
             "id", "flight_number", "departure_airport", "arrival_airport",
-            "departure_time", "arrival_time", "available_tickets",
-            "ticket_price", "airline_name", "flight_status"
+            "departure_time", "arrival_time", "ticket_price", "airplane", "airline_name",
+            "flight_status", "created_at"
             ]
     
     def validate(self,attrs):
@@ -21,8 +20,7 @@ class FlightSerializer(serializers.ModelSerializer):
         self._validate_timestamps(attrs, errors)
         # rule 2
         self._validate_airports(attrs, errors)
-        # rule 3
-        self._validate_available_tickets(attrs, errors)
+
 
         if errors:
             raise serializers.ValidationError(errors)
@@ -40,68 +38,13 @@ class FlightSerializer(serializers.ModelSerializer):
         if dep and arr and dep == arr:
             errors['arrival_airport'] = "Arrival airport and departure airport cannot be the same."
 
-    def _validate_available_tickets(self, attrs, errors):
-        avb_tickets = attrs.get("available_tickets")
-        fli_status = attrs.get("flight_status")
-        if avb_tickets is None or fli_status is None:
-            return
-
-        if fli_status != Flight.FlightStatus.SCHEDULED and avb_tickets > 0:
-            errors['available_tickets'] = (
-                "Cannot have available tickets when "
-                f"the flight status is '{fli_status}'."
-                )
-
-
-
-
-
-class TicketCreateSerializer(serializers.ModelSerializer):
-    flight_number = serializers.SlugRelatedField(
-        slug_field='flight_number',
-        queryset=Flight.objects.all()
-        )
-    seat = serializers.CharField()
-
-    class Meta:
-        model = Ticket
-        fields = ['flight_number', 'seat']
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Ticket.objects.all(),
-                fields=['flight_number', 'seat'],
-                message="This seat is already occupied on this flight."
-            )
-        ]    
-
-    def validate(self, attrs):
-        flight_instance = attrs["flight_number"]
-
-        if flight_instance.flight_status != Flight.FlightStatus.SCHEDULED:
-            raise serializers.ValidationError(
-                {"flight_number": f"Booking is closed for flight {flight_instance.flight_number} "
-                f"because it is currently {flight_instance.get_flight_status_display()}."}
-            )
-
-        if flight_instance.available_tickets <= 0:
-            raise serializers.ValidationError(
-                {"flight_number": f"No tickets available for flight {flight_instance.flight_number}."}
-            )
-        return attrs
-
-
 
 class TicketSerializer(serializers.ModelSerializer):
-    flight_number = serializers.SlugRelatedField(
-        slug_field='flight_number',
-        read_only=True
-    )
-
 
     class Meta:
         model = Ticket
         fields = [
-            "id", "flight_number", "client",
+            "id", "flight_seat", "passenger_name",
             "seat", "ticket_status"
         ]
         read_only_fields = ["id", "ticket_status"]
@@ -111,9 +54,9 @@ class TicketSerializer(serializers.ModelSerializer):
 class AirplaneSeatSerializer(serializers.ModelSerializer):
     class Meta:
         model = AirplaneSeat
-        fields = ["id", "flight_number", "row", "seat", "class_type" ]
+        fields = ["id", "flight_number", "row", "seat", "class_type", "status", "price" ]
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = ["id", "user_id", "status", "created_at"]
+        fields = ["id", "user_id", "created_at", "status", "total_price"]
