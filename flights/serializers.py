@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from .models import Flight, Ticket
+from .models import Flight, Ticket, AirplaneSeat, Booking
 
 
 class FlightSerializer(serializers.ModelSerializer):
@@ -28,25 +28,25 @@ class FlightSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(errors)
         return attrs
     
-    def _validate_timestamps(attrs, errors):
+    def _validate_timestamps(self, attrs, errors):
         dep_time = attrs.get("departure_time")
         arr_time = attrs.get("arrival_time")
         if dep_time and arr_time and arr_time <= dep_time:
             errors['arrival_time'] = "Arrival time must be after departure time."
 
-    def _validate_airports(attrs, errors):
+    def _validate_airports(self, attrs, errors):
         dep = attrs.get("departure_airport")
         arr =attrs.get("arrival_airport")
-        if dep and arr and dep != arr:
+        if dep and arr and dep == arr:
             errors['arrival_airport'] = "Arrival airport and departure airport cannot be the same."
 
-    def _validate_available_tickets(attrs, errors):
+    def _validate_available_tickets(self, attrs, errors):
         avb_tickets = attrs.get("available_tickets")
         fli_status = attrs.get("flight_status")
         if avb_tickets is None or fli_status is None:
             return
 
-        if fli_status != "SCHEDULED" and avb_tickets > 0:
+        if fli_status != Flight.FlightStatus.SCHEDULED and avb_tickets > 0:
             errors['available_tickets'] = (
                 "Cannot have available tickets when "
                 f"the flight status is '{fli_status}'."
@@ -58,6 +58,7 @@ class FlightSerializer(serializers.ModelSerializer):
 
 class TicketCreateSerializer(serializers.ModelSerializer):
     flight_number = serializers.SlugRelatedField(
+        slug_field='flight_number',
         queryset=Flight.objects.all()
         )
     seat = serializers.CharField()
@@ -106,3 +107,13 @@ class TicketSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "ticket_status"]
     
 
+
+class AirplaneSeatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AirplaneSeat
+        fields = ["id", "flight_number", "row", "seat", "class_type" ]
+
+class BookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ["id", "user_id", "status", "created_at"]
