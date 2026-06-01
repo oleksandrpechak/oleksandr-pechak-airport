@@ -23,6 +23,7 @@ class Flight(models.Model):
         max_digits=8,
         decimal_places=2
         )
+    business_percent = models.PositiveIntegerField()
     airplane = models.ForeignKey(
         "aviation.FleetItem", on_delete=models.PROTECT
     )
@@ -36,7 +37,7 @@ class Flight(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return f"{self.departure_airport} >> {self.arrival_airport}"
+        return f"{self.departure_airport} >> {self.arrival_airport}" 
 
 
 class BookingStatus(models.TextChoices):
@@ -45,7 +46,7 @@ class BookingStatus(models.TextChoices):
     CANCELLED = "CANCELLED", "cancelled"
 
 class Booking(models.Model):
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.CASCADE
     )
@@ -63,6 +64,7 @@ class Booking(models.Model):
 
 
 class TicketStatus(models.TextChoices):
+    AVAILABLE = "AVAILABLE", "available"
     BOOKED = "BOOKED", "booked"
     USED = "USED", "used"
     PAID = "PAID", "paid"
@@ -77,12 +79,17 @@ class Ticket(models.Model):
     booking = models.ForeignKey(
         "Booking",
         on_delete=models.CASCADE,
-        related_name="tickets"
+        related_name="tickets",
+        null=True,
+        blank=True
     )
     passenger_name = models.ForeignKey(
-        "users.CustomUser", on_delete=models.CASCADE
+        "users.CustomUser",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
     )
-    flight_seat = models.OneToOneField(
+    flight_seat = models.ForeignKey(
         "aviation.AirplaneSeat", on_delete=models.CASCADE
     )
     price = models.DecimalField(
@@ -92,12 +99,7 @@ class Ticket(models.Model):
     ticket_status = models.CharField(
         max_length=10,
         choices=TicketStatus.choices,
-        default=TicketStatus.BOOKED
+        default=TicketStatus.AVAILABLE
     )
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['flight_number','flight_seat'],
-                name="unique_ticket"
-                )
-        ]
+        unique_together = ('flight_number', 'flight_seat')

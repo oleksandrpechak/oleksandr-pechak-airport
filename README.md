@@ -53,10 +53,11 @@ Building Django REST Framework for an Airport
   - 'created_at'
 
 - 'Booking'
-  - 'user_id'
+  - 'user'
   - 'created_at'
   - 'status'
   - 'total_price'
+
 - `Ticket`
   - 'flight_number' (fk to flight)
   - `booking` (ForeignKey to `Booking`)
