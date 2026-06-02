@@ -7,6 +7,7 @@ class Airplane(models.Model):
     model = models.CharField(max_length=100)
     rows = models.PositiveIntegerField()
     seats_per_row = models.PositiveIntegerField()
+    business_rows_percent = models.PositiveIntegerField(default=10)
     def total_seats(self):
         return self.rows * self.seats_per_row
 

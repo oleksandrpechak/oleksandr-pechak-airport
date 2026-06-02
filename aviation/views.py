@@ -3,26 +3,15 @@ from .serializers import AirplaneSerializer, AirlineSerializer, AirportSerialize
 from .filters import AirplaneFilter, AirlineFilter, AirportFilter, AirplaneSeatFilter
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .services.airplane_seat_service import create_airplane_with_seats
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
-
+from rest_framework.permissions import IsAuthenticated
 
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
     serializer_class = AirplaneSerializer
-
-
-
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        airplane = create_airplane_with_seats(serializer.validated_data)
-
-        return Response(AirplaneSerializer(airplane).data, status=status.HTTP_201_CREATED)
-    
+    permission_classes = [IsAuthenticated]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -40,7 +29,7 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 class AirplaneSeatViewSet(viewsets.ModelViewSet):
     queryset = AirplaneSeat.objects.all()
     serializer_class = AirplaneSeatSerializer
-
+    permission_classes = [IsAuthenticated]
 
     filter_backends = [
         DjangoFilterBackend,
@@ -55,7 +44,7 @@ class AirplaneSeatViewSet(viewsets.ModelViewSet):
 class AirlineViewSet(viewsets.ModelViewSet):
     queryset = Airline.objects.all()
     serializer_class = AirlineSerializer
-
+    permission_classes = [IsAuthenticated]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -66,7 +55,7 @@ class AirlineViewSet(viewsets.ModelViewSet):
 class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
-
+    permission_classes = [IsAuthenticated]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -84,3 +73,4 @@ class AirportViewSet(viewsets.ModelViewSet):
 class FleetItemViewSet(viewsets.ModelViewSet):
     queryset = FleetItem.objects.all()
     serializer_class = FleetItemSerializer
+    permission_classes = [IsAuthenticated]

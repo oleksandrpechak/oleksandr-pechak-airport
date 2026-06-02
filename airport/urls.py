@@ -1,10 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from django.http import JsonResponse
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-# api/aviation/ для всіх
-# api/aviation
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,6 +12,8 @@ urlpatterns = [
     path("api/aviation/", include("aviation.urls",)),
     path("api/flights/", include("flights.urls")),
 
+    path('api/token/', TokenObtainPairView.as_view()),
+    path('api/token/refresh/', TokenRefreshView.as_view()),
 
     # Spectacular
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

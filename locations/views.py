@@ -4,12 +4,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Country, City
 from .serializers import CountrySerializer, CitySerializer
 from .filters import CountryFilter
+from rest_framework.permissions import IsAuthenticated
 
 
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
-
+    permission_classes = [IsAuthenticated]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -29,7 +30,7 @@ class CountryViewSet(viewsets.ModelViewSet):
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
-
+    permission_classes = [IsAuthenticated]
     filter_backends = [
         SearchFilter,
         OrderingFilter,

@@ -1,12 +1,15 @@
 from rest_framework import serializers
 from .models import Flight, Ticket, Booking
-
+from .services.flight_service import create_flight_with_tickets, create_booking
 
 class FlightSerializer(serializers.ModelSerializer):
     class Meta:
         model = Flight
         fields = '__all__'
         read_only_fields = ['id', 'flight_status', 'created_at']
+
+    def create(self, validated_data):
+        return create_flight_with_tickets(validated_data)
         
     def validate(self,attrs):
         """
@@ -38,7 +41,7 @@ class FlightSerializer(serializers.ModelSerializer):
             errors['arrival_airport'] = "Arrival airport and departure airport cannot be the same."
 
     def _validate_fleet_item(self, attrs, errors):
-        fleet_item = attrs.get("fleet_item")
+        fleet_item = attrs.get("airplane")
         airline = attrs.get('airline_name')
         if fleet_item.airline != airline:
             errors['fleet_item'] = "Fleet item have to reference to the same airline as the flight"
@@ -58,4 +61,12 @@ class TicketSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = ["id", "user_id", "created_at", "status", "total_price"]
+        fields = ["id", "user", "created_at", "status", "total_price"]
+
+class BookingCreateSerializer(serializers.Serializer):
+    ticket_ids = serializers.ListField(
+        child = serializers.IntegerField(min_value=1)
+    )
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return create_booking(user, validated_data['ticket_ids'])
