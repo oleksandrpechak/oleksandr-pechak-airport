@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'locations',
     'aviation',
     'flights',
+    'payments',
     
 ]
 
@@ -56,7 +58,7 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -164,3 +166,45 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # NEW : Implementation of CustomerUser
 AUTH_USER_MODEL = "users.CustomUser"
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": (
+                "%(asctime)s | "
+                "%(levelname)s | "
+                "%(name)s | "
+                "%(message)s"
+            )
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "logs/app.log",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "standard",
+        },
+    },
+
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+}
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+STRIPE_SECRET_KEY=config("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="")

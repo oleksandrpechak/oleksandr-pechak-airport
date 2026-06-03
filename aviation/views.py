@@ -7,11 +7,13 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from users.permissions import IsAdmin
 
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
     serializer_class = AirplaneSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -29,7 +31,8 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 class AirplaneSeatViewSet(viewsets.ModelViewSet):
     queryset = AirplaneSeat.objects.all()
     serializer_class = AirplaneSeatSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
 
     filter_backends = [
         DjangoFilterBackend,
@@ -44,7 +47,7 @@ class AirplaneSeatViewSet(viewsets.ModelViewSet):
 class AirlineViewSet(viewsets.ModelViewSet):
     queryset = Airline.objects.all()
     serializer_class = AirlineSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -55,7 +58,7 @@ class AirlineViewSet(viewsets.ModelViewSet):
 class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -73,4 +76,13 @@ class AirportViewSet(viewsets.ModelViewSet):
 class FleetItemViewSet(viewsets.ModelViewSet):
     queryset = FleetItem.objects.all()
     serializer_class = FleetItemSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    filter_backends = [
+        SearchFilter,
+        OrderingFilter
+    ]
+    search_fields = [
+        "tail_number"
+    ]
+    ordering_fields = ["airplane", "airline"]
