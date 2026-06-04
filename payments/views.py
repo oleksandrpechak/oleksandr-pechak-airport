@@ -12,9 +12,14 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db import transaction
 from .tasks import send_ticket_email
 import logging
+from rest_framework.throttling import UserRateThrottle
 
 
 logger = logging.getLogger(__name__)
+
+class PaymentThrottle(UserRateThrottle):
+    rate = '10/hour'
+
 
 class PaymentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -37,7 +42,7 @@ class PaymentView(APIView):
 
 class PaymentCreateView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes = [PaymentThrottle]
     def post(self,request, booking_id=None):
         try:
             booking = Booking.objects.get(id = booking_id) 
