@@ -4,6 +4,8 @@ from .models import CustomUser
 from .serializers import CustomUserSerializer
 from .filters import CustomUserFilter
 from rest_framework import viewsets
+from .permissions import IsAdmin
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
 
@@ -11,7 +13,12 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter,]
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdmin()]
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CustomUserFilter
     search_fields = [
         "email", "first_name", "last_name"

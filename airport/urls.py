@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/locations/", include("locations.urls")),
     path("api/aviation/", include("aviation.urls",)),
     path("api/flights/", include("flights.urls")),
+    path("api/payments/", include("payments.urls")),
 
     path('api/token/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),

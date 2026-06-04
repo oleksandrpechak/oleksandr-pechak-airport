@@ -4,13 +4,17 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Country, City
 from .serializers import CountrySerializer, CitySerializer
 from .filters import CountryFilter
-from rest_framework.permissions import IsAuthenticated
+from users.permissions import IsAdmin
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdmin()]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -30,7 +34,10 @@ class CountryViewSet(viewsets.ModelViewSet):
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdmin()]
     filter_backends = [
         SearchFilter,
         OrderingFilter,
