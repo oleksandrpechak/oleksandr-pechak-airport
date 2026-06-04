@@ -1,5 +1,6 @@
 import stripe
 from django.conf import settings
+from datetime import datetime, timedelta
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -8,17 +9,18 @@ def create_checkout_session(booking):
         payment_method_types=['card'],
         line_items=[{
             'price_data': {
-                'currency': 'usd',
+                'currency': settings.DEFAULT_CURRENCY,
                 'product_data': {
                     'name': f'Booking #{booking.id}',
                 },
                 'unit_amount': int(booking.total_price * 100),
             },
-            'quantity': 1,
+            'quantity': settings.PAYMENT_QUANTITY,
         }],
         mode='payment',
-        success_url='http://localhost:8000/api/payments/success/',
-        cancel_url='http://localhost:8000/api/payments/cancel/',
-        metadata={'booking_id': booking.id}
+        success_url=settings.STRIPE_SUCCESS_URL,
+        cancel_url=settings.STRIPE_CANCEL_URL,
+        metadata={'booking_id': booking.id},
+        expires_at=int((datetime.now() + timedelta(minutes=30)).timestamp())
     )
     return session
