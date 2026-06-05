@@ -43,7 +43,7 @@ class FlightSerializer(serializers.ModelSerializer):
     def _validate_fleet_item(self, attrs, errors):
         fleet_item = attrs.get("airplane")
         airline = attrs.get('airline_name')
-        if fleet_item.airline != airline:
+        if fleet_item and airline and fleet_item.airline != airline:
             errors['fleet_item'] = "Fleet item have to reference to the same airline as the flight"
 
 
@@ -70,3 +70,8 @@ class BookingCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = self.context['request'].user
         return create_booking(user, validated_data['ticket_ids'])
+
+class SeatMapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ['id', 'flight_seat', 'ticket_status']

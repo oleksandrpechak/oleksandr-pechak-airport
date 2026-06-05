@@ -28,10 +28,11 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = True
 
 
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    cast=lambda v: [host.strip() for host in v.split(",")]
-)
+ALLOWED_HOSTS = ['*']
+# config(
+#     "ALLOWED_HOSTS",
+#     cast=lambda v: [host.strip() for host in v.split(",")]
+# )
 
 
 # Application definition
@@ -126,9 +127,9 @@ WSGI_APPLICATION = 'airport.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config("DB_NAME"),
-        'USER': config("DB_USER"),
-        'PASSWORD': config("DB_PASSWORD"),
+        'NAME': config("POSTGRES_DB"),
+        'USER': config("POSTGRES_USER"),
+        'PASSWORD': config("POSTGRES_PASSWORD"),
         'HOST': config("DB_HOST"),
         'PORT': config("DB_PORT"),
     }
@@ -215,8 +216,8 @@ LOGGING = {
 }
 
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
 
 STRIPE_SECRET_KEY=config("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="")
