@@ -1,12 +1,15 @@
 from django.db import models
 
 
-class PaymentStatus(models.TextChoices):
-    PENDING = "PENDING", "pending"
-    CONFIRMED = "CONFIRMED", "confirmed"
-    FAILED = "FAILED", "fail"
+
 
 class Payment(models.Model):
+    class PaymentStatus(models.TextChoices):
+        PENDING = "PENDING", "pending"
+        COMPLETED = "COMPLETED", "completed"
+        FAILED = "FAILED", "fail",
+        EXPIRED = "EXPIRED", "expired"
+
     booking = models.OneToOneField(
         "flights.Booking",
         on_delete=models.CASCADE,
@@ -27,6 +30,3 @@ class Payment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-
-
-# Create your models here.

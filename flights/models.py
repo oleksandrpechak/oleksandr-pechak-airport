@@ -1,13 +1,15 @@
 from django.db import models
 
-class FlightStatus(models.TextChoices):
-    SCHEDULED = "SCHEDULED", "scheduled"
-    BOARDING = "BOARDING", "boarding"
-    DEPARTED = "DEPARTED", "departed"
-    DELAYED = "DELAYED", "delayed"
-    CANCELLED = "CANCELLED", "cancelled"
+
 
 class Flight(models.Model):
+    class FlightStatus(models.TextChoices):
+        SCHEDULED = "SCHEDULED", "scheduled"
+        BOARDING = "BOARDING", "boarding"
+        DEPARTED = "DEPARTED", "departed"
+        DELAYED = "DELAYED", "delayed"
+        CANCELLED = "CANCELLED", "cancelled"
+
     flight_number = models.CharField(max_length=5)
     departure_airport = models.ForeignKey(
         "aviation.Airport", on_delete=models.PROTECT,
@@ -40,12 +42,14 @@ class Flight(models.Model):
         return f"{self.departure_airport} >> {self.arrival_airport}" 
 
 
-class BookingStatus(models.TextChoices):
-    PENDING = "PENDING", "pending"
-    CONFIRMED = "CONFIRMED", "confirmed"
-    CANCELLED = "CANCELLED", "cancelled"
+
 
 class Booking(models.Model):
+    class BookingStatus(models.TextChoices):
+        PENDING = "PENDING", "pending"
+        CONFIRMED = "CONFIRMED", "confirmed"
+        CANCELLED = "CANCELLED", "cancelled"
+
     user = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.CASCADE
@@ -63,14 +67,15 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-class TicketStatus(models.TextChoices):
-    AVAILABLE = "AVAILABLE", "available"
-    BOOKED = "BOOKED", "booked"
-    USED = "USED", "used"
-    PAID = "PAID", "paid"
-    CANCELLED = "CANCELLED", "cancelled"
+
 
 class Ticket(models.Model):
+    class TicketStatus(models.TextChoices):
+        AVAILABLE = "AVAILABLE", "available"
+        BOOKED = "BOOKED", "booked"
+        USED = "USED", "used"
+        PAID = "PAID", "paid"
+        CANCELLED = "CANCELLED", "cancelled"
     flight_number = models.ForeignKey(
         "flights.Flight",
         on_delete=models.CASCADE,

@@ -59,7 +59,7 @@ def create_booking(user, ticket_ids: list) -> Booking:
                 user=user,
                 total_price = tickets.aggregate(total = Sum('price'))['total']
                 )
-            cancel_unpaid_booking.apply_async(args=[booking.id], countdown=900)
+            cancel_unpaid_booking.apply_async(args=[booking.id], countdown=1800)
             tickets.update(ticket_status = "BOOKED", booking=booking, passenger_name = user)
             logger.info(f"Booking with id:{booking.id} successfuly created by: {user}")
             return booking
