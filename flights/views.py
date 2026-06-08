@@ -1,5 +1,5 @@
 from .models import Flight, Ticket, Booking
-from .serializers import FlightSerializer, TicketSerializer, BookingSerializer, BookingCreateSerializer
+from .serializers import FlightSerializer, TicketSerializer, BookingSerializer, BookingCreateSerializer, SeatMapSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
@@ -17,8 +17,8 @@ class FlightViewSet(viewsets.ModelViewSet):
     serializer_class = FlightSerializer
     
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [AllowAny]
+        if self.action in ['list', 'retrieve', 'seatmap']:
+            return [AllowAny()]
         return [IsAuthenticated(), IsAdmin()]
     
     filter_backends = [
@@ -38,6 +38,11 @@ class FlightViewSet(viewsets.ModelViewSet):
         "ticket_price",
         "flight_number",
     ]
+    @action(detail=True, methods=['get'])
+    def seatmap(self, request, pk=None):
+        tickets = Ticket.objects.filter(flight_number_id = pk)
+        return Response(SeatMapSerializer(tickets, many=True).data, status=status.HTTP_200_OK)
+
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()

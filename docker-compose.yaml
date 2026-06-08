@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:17
+    container_name: airport-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+  redis:
+    image: redis:8
+    container_name: airport-redis
+    ports:
+      - "6379:6379"
+  web:
+    build: .
+    container_name: airport-drf
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+  celery:
+    build: .
+    command: celery -A airport worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+volumes:
+  postgres_data:

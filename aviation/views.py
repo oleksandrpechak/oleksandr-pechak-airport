@@ -40,9 +40,7 @@ class AirplaneSeatViewSet(viewsets.ModelViewSet):
         OrderingFilter
     ]
     filterset_class = AirplaneSeatFilter
-    search_fields = [
 
-    ]
 
 class AirlineViewSet(viewsets.ModelViewSet):
     queryset = Airline.objects.all()
