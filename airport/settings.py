@@ -51,11 +51,12 @@ INSTALLED_APPS = [
     'django_filters',
 
 
-    'users', # NEW : Implementation of CustomerUser
+    'users',
     'locations',
     'aviation',
     'flights',
     'payments',
+    'chat',
     
 ]
 
@@ -246,3 +247,9 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
 }
 
+LANGSMITH_TRACING=config("LANGSMITH_TRACING")
+LANGSMITH_ENDPOINT=config("LANGSMITH_ENDPOINT")
+LANGSMITH_API_KEY=config("LANGSMITH_API_KEY")
+LANGSMITH_PROJECT=config("LANGSMITH_PROJECT")
+
+GOOGLE_API_KEY=config("GOOGLE_API_KEY")
