@@ -1,6 +1,7 @@
 import stripe
 from django.conf import settings
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -21,6 +22,6 @@ def create_checkout_session(booking):
         success_url=settings.STRIPE_SUCCESS_URL,
         cancel_url=settings.STRIPE_CANCEL_URL,
         metadata={'booking_id': booking.id},
-        expires_at=int((datetime.now() + timedelta(minutes=30)).timestamp())
+        expires_at=int((timezone.now() + timedelta(minutes=30)).timestamp())
     )
     return session

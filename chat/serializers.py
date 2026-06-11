@@ -7,7 +7,8 @@ class ConversationSerializer(serializers.ModelSerializer):
         model = Conversation
         fields = [
             'id',
-            'created_at'
+            'created_at',
+            'last_activity_at'
         ]
         read_only_fields = fields
 
@@ -20,4 +21,4 @@ class MessageSerializer(serializers.ModelSerializer):
             'created_at',
             'role'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = fields

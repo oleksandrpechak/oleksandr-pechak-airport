@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ConversationViewSet(
-    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
@@ -30,7 +30,7 @@ class ConversationViewSet(
 class ChatAPIView(APIView):
     def post(self, request, pk):
         try:
-            conversation = Conversation.objects.get(id = pk)
+            conversation = Conversation.objects.get(id=pk, user=request.user)
         except Conversation.DoesNotExist:
             logger.warning(f'Conversation with id {pk} does not exist')
             return Response (
