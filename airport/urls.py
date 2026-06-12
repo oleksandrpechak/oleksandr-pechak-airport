@@ -12,11 +12,11 @@ urlpatterns = [
     path("api/aviation/", include("aviation.urls",)),
     path("api/flights/", include("flights.urls")),
     path("api/payments/", include("payments.urls")),
+    path("api/chat/", include("chat.urls")),
 
     path('api/token/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
 
-    # Spectacular
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema')),
 ]
