@@ -5,4 +5,3 @@ from .models import Conversation, Message
 admin.site.register(Conversation)
 admin.site.register(Message)
 
-# Register your models here.

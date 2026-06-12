@@ -3,10 +3,10 @@ from rest_framework.routers import DefaultRouter
 from .views import ConversationViewSet, ChatAPIView
 router = DefaultRouter()
 
-router.register(r'chat', ConversationViewSet,basename='conversation')
 
+router.register(r'conversations', ConversationViewSet, basename='conversation')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('conversations/<int:pk>/messages/', ChatAPIView.as_view(), name='chat')
+    path('message/', ChatAPIView.as_view(), name='chat'),
 ]

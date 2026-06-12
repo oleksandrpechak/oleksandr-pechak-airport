@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            height: 90vh;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .token-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .token-input-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .token-input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .token-input-group button {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .token-input-group button:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .token-status {
+            font-size: 11px;
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .token-status.valid {
+            color: #4ade80;
+        }
+
+        .token-status.invalid {
+            color: #f87171;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.ai {
+            justify-content: flex-start;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .message.user .bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.ai .bubble {
+            background: #f3f4f6;
+            color: #1f2937;
+            border-bottom-left-radius: 4px;
+        }
+
+        .bubble p {
+            margin: 8px 0;
+        }
+
+        .bubble p:first-child {
+            margin-top: 0;
+        }
+
+        .bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .bubble strong {
+            font-weight: 600;
+        }
+
+        .bubble ul {
+            margin-left: 20px;
+            margin: 8px 0 8px 20px;
+        }
+
+        .bubble li {
+            margin: 4px 0;
+        }
+
+        .bubble code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .message.ai .bubble code {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .loading {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .loading span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: bounce 1.4s infinite;
+        }
+
+        .loading span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            40% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .input-area {
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-area button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .input-area button:hover {
+            transform: scale(1.05);
+        }
+
+        .input-area button:active {
+            transform: scale(0.98);
+        }
+
+        .input-area button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f3f4f6;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Chat Assistant</h1>
+            <div class="token-input-group">
+                <input
+                    type="password"
+                    id="tokenInput"
+                    placeholder="Paste your JWT token here..."
+                    autocomplete="off"
+                />
+                <button onclick="saveToken()">Save Token</button>
+            </div>
+            <div class="token-status" id="tokenStatus"></div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="input-area">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="Type your message..."
+                autocomplete="off"
+            />
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const WS_URL = 'ws://localhost:8000/ws/chat/';
+        let socket = null;
+        const API_URL = 'http://localhost:8000/api/chat/message/';
+        const TOKEN_KEY = 'chat_jwt_token';
+        const messagesContainer = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const tokenInput = document.getElementById('tokenInput');
+        const tokenStatus = document.getElementById('tokenStatus');
+
+        let token = null;
+        let isLoading = false;
+        let currentAiMessage = null;
+        let currentAiMessageText = '';
+        let aiChunkQueue = [];
+        let aiChunkProcessing = false;
+        let aiStreamDone = false;
+
+        // Initialize on page load
+        function initializeApp() {
+            loadToken();
+            setupEventListeners();
+            updateTokenStatus();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !isLoading) {
+                    sendMessage();
+                }
+            });
+
+            tokenInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    saveToken();
+                }
+            });
+        }
+
+        // Load token from localStorage
+        function loadToken() {
+            token = localStorage.getItem(TOKEN_KEY);
+            if (token) {
+                tokenInput.value = token;
+                updateTokenStatus();
+                connectWebSocket();
+            }
+        }
+
+        // Save token to localStorage
+        function saveToken() {
+            const newToken = tokenInput.value.trim();
+            if (!newToken) {
+                alert('Please paste a token');
+                return;
+            }
+            token = newToken;
+            localStorage.setItem(TOKEN_KEY, token);
+            updateTokenStatus();
+            messageInput.focus();
+            connectWebSocket();
+        }
+        // Update token status display
+        function updateTokenStatus() {
+            if (token) {
+                tokenStatus.textContent = '✓ Token saved';
+                tokenStatus.className = 'token-status valid';
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+            } else {
+                tokenStatus.textContent = '✗ No token provided';
+                tokenStatus.className = 'token-status invalid';
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+            }
+        }
+
+        // Send message
+        function connectWebSocket() {
+            socket = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log("WS message", data);
+
+                if (data.error) {
+                    removeLoadingIndicator();
+                    addMessage(data.error, 'ai');
+                    finishAiMessage();
+                    return;
+                }
+
+                if (data.chunk) {
+                    console.log("chunk:", data.chunk);
+                    appendAiChunk(data.chunk);
+                    return;
+                }
+
+                if (data.response) {
+                    addMessage(data.response, 'ai');
+                    finishAiMessage();
+                    return;
+                }
+
+                if (data.done) {
+                    aiStreamDone = true;
+                    if (aiChunkQueue.length === 0 && !aiChunkProcessing) {
+                        finishAiMessage();
+                    }
+                }
+            };
+
+            socket.onclose = () => {
+                addMessage('Connection lost. Refresh the page.', 'ai');
+            };
+
+            socket.onerror = () => {
+                addMessage('Connection error.', 'ai');
+            };
+        }
+
+        async function sendMessage() {
+            const content = messageInput.value.trim();
+            if (!content || isLoading || !token || !socket || socket.readyState !== WebSocket.OPEN) return;
+
+            addMessage(content, 'user');
+            messageInput.value = '';
+            showLoadingIndicator();
+            isLoading = true;
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+
+            socket.send(JSON.stringify({ content }));
+        }
+
+        // Add message to chat
+        function addMessage(content, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble';
+
+            if (sender === 'ai') {
+                // Parse markdown for AI messages
+                bubbleDiv.innerHTML = marked.parse(content);
+            } else {
+                // Plain text for user messages
+                bubbleDiv.textContent = content;
+            }
+
+            messageDiv.appendChild(bubbleDiv);
+            messagesContainer.appendChild(messageDiv);
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Show loading indicator
+        function showLoadingIndicator() {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.id = 'loadingMessage';
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble';
+
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.innerHTML = '<span></span><span></span><span></span>';
+
+            bubbleDiv.appendChild(loadingDiv);
+            messageDiv.appendChild(bubbleDiv);
+            messagesContainer.appendChild(messageDiv);
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Remove loading indicator
+        function removeLoadingIndicator() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+        }
+
+        function appendAiChunk(chunk) {
+            if (!currentAiMessage) {
+                removeLoadingIndicator();
+                currentAiMessageText = '';
+                aiChunkQueue = [];
+                aiStreamDone = false;
+                currentAiMessage = createAiMessageBubble();
+            }
+            aiChunkQueue.push(chunk);
+            if (!aiChunkProcessing) {
+                processAiChunks();
+            }
+        }
+
+        function processAiChunks() {
+            if (aiChunkQueue.length === 0) {
+                aiChunkProcessing = false;
+                if (aiStreamDone) {
+                    finishAiMessage();
+                }
+                return;
+            }
+
+            aiChunkProcessing = true;
+            const chunk = aiChunkQueue.shift();
+            const step = 12;
+            const piece = chunk.slice(0, step);
+            const remainder = chunk.slice(step);
+
+            currentAiMessageText += piece;
+            updateAiBubble();
+
+            if (remainder.length > 0) {
+                aiChunkQueue.unshift(remainder);
+            }
+
+            setTimeout(processAiChunks, 20);
+        }
+
+        function updateAiBubble() {
+            const bubble = currentAiMessage.querySelector('.bubble');
+            bubble.innerHTML = marked.parse(currentAiMessageText);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function createAiMessageBubble() {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble';
+
+            messageDiv.appendChild(bubbleDiv);
+            messagesContainer.appendChild(messageDiv);
+            return messageDiv;
+        }
+
+        function finishAiMessage() {
+            removeLoadingIndicator();
+            currentAiMessage = null;
+            currentAiMessageText = '';
+            aiChunkQueue = [];
+            aiStreamDone = false;
+            isLoading = false;
+            sendButton.disabled = false;
+            messageInput.disabled = false;
+            messageInput.focus();
+        }
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 from .models import Conversation, Message
 from .serializers import MessageSerializer, ConversationSerializer
+from .services.chat_services import prepare_chat_context, save_chat_response
+from .services.gemini import generate_response
+from .tools import ALL_TOOLS
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
@@ -28,22 +31,23 @@ class ConversationViewSet(
         return serializer.save(user=self.request.user)
     
 class ChatAPIView(APIView):
-    def post(self, request, pk):
-        try:
-            conversation = Conversation.objects.get(id=pk, user=request.user)
-        except Conversation.DoesNotExist:
-            logger.warning(f'Conversation with id {pk} does not exist')
-            return Response (
-                {'detail': f'Conversation with id {pk} does not exist'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
         content = request.data.get('content')
         if not content:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        message = Message.objects.create(
-            conversation = conversation,
-            role = Message.MessageRole.USER,
-            content = content
-        )
-
-        return Response(MessageSerializer(message).data, status=status.HTTP_200_OK)
+            return Response (
+                {'detail': 'Content is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            conversation, contents = prepare_chat_context(request.user, content)
+            response_text = "".join(generate_response(contents, ALL_TOOLS))
+            save_chat_response(conversation, response_text)
+            return Response({'response': response_text}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+        
