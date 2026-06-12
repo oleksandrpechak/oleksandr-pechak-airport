@@ -1,9 +1,6 @@
 from ..models import Message, Conversation
-from ...users.models import CustomUser
-from django.conf import settings
+from users.models import CustomUser
 from django.utils.timezone import now
-from django.db import transaction
-from google import genai
 from datetime import timedelta
 from ..tasks import summarize_conversation
 from .gemini import generate_response
@@ -11,7 +8,7 @@ from ..tools import ALL_TOOLS
 
 
 
-def handle_chat_message(user: CustomUser, content:str):
+def prepare_chat_context(user: CustomUser, content:str):
     cutoff = now() - timedelta(minutes=15)
     conversation = (
         Conversation.objects.filter(
@@ -49,13 +46,14 @@ def handle_chat_message(user: CustomUser, content:str):
             "role": m.role,
             "parts": [{"text": m.content}]
             })
-    response_text = generate_response(contents, ALL_TOOLS)
-
+    return (conversation, contents)
+    
+def save_chat_response(conversation, response_text):
     message = Message.objects.create(
         conversation = conversation,
         role = Message.Role.MODEL,
         content = response_text,
-    )
+        )
     return response_text
 
 

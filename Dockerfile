@@ -20,5 +20,5 @@ COPY . /app/
 
 EXPOSE 8000 
 
-# 6. Залишаємо gunicorn (або міняємо на runserver для локального автоперезапуску коду, див. нижче)
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--timeout", "120", "airport.wsgi:application"]
+
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "airport.asgi:application"]

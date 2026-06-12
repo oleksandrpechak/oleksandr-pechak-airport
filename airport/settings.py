@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
+    'daphne',
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -57,9 +59,10 @@ INSTALLED_APPS = [
     'flights',
     'payments',
     'chat',
+
+
     
 ]
-
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -216,6 +219,24 @@ LOGGING = {
     },
 }
 
+ASGI_APPLICATION = "airport.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                {
+                    "address": "redis://redis:6379",
+                    "socket_timeout": 20,
+                    "socket_connect_timeout": 10,
+                    "retry_on_timeout": True,
+                }
+            ],
+            "capacity": 100,
+        },
+    },
+}
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
@@ -246,10 +267,5 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
 }
-
-LANGSMITH_TRACING=config("LANGSMITH_TRACING")
-LANGSMITH_ENDPOINT=config("LANGSMITH_ENDPOINT")
-LANGSMITH_API_KEY=config("LANGSMITH_API_KEY")
-LANGSMITH_PROJECT=config("LANGSMITH_PROJECT")
 
 GOOGLE_API_KEY=config("GOOGLE_API_KEY")

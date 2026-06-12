@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from google.genai import types
-from ..flights.models import Flight
+from flights.models import Flight
 
 
 logger = logging.getLogger(__name__)
@@ -48,17 +48,25 @@ def get_flights(
         except ValueError:
             logger.warning("Date is wrong format.")
     queryset = queryset.filter(flight_status = Flight.FlightStatus.SCHEDULED)
-    return list(queryset.values(
-        "flight_number",
-        "departure_time",
-        "arrival_time",
-        "ticket_price",
-        "flight_status",
-        "departure_airport__name",
-        "departure_airport__city__city",
-        "arrival_airport__name",
-        "arrival_airport__city__city",
-    ))
+    return [
+        {
+        **flight,
+        "ticket_price": float(flight["ticket_price"]),
+        "departure_time": str(flight["departure_time"]),
+        "arrival_time": str(flight["arrival_time"]),
+        }
+        for flight in queryset.values(
+                "flight_number",
+                "departure_time",
+                "arrival_time",
+                "ticket_price",
+                "flight_status",
+                "departure_airport__name",
+                "departure_airport__city__city",
+                "arrival_airport__name",
+                "arrival_airport__city__city",
+            )
+    ]
 
 
 tools_map = {
