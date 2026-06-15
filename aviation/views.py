@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsAdmin
+from .services.airplane_seat_service import create_airplane_with_seats
 
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
@@ -27,6 +28,9 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     ordering_fields = [
         "brand", "model", "rows", "seats_per_row"
     ]
+    def perform_create(self, serializer):
+        validated_data = serializer.validated_data
+        create_airplane_with_seats(validated_data)
 
 class AirplaneSeatViewSet(viewsets.ModelViewSet):
     queryset = AirplaneSeat.objects.all()

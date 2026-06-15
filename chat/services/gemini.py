@@ -36,7 +36,7 @@ def generate_summary(prompt: str) -> str:
     )
     return response.text
 
-def generate_response(contents: list, tools: list) -> Generator:
+def generate_response(contents: list, tools: list, user:None) -> Generator:
     try:
         stream = client.models.generate_content_stream(
             model=MODEL,
@@ -54,7 +54,7 @@ def generate_response(contents: list, tools: list) -> Generator:
                     logger.info(f"Function to call: {function_call.name}")
                     logger.info(f"ID: {function_call.id}")
                     logger.info(f"Arguments: {function_call.args}")
-                    result = execute_tool(function_call.name, function_call.args)
+                    result = execute_tool(function_call.name, function_call.args, user=user)
                     contents.append(chunk.candidates[0].content)
 
                     contents.append(types.Content(

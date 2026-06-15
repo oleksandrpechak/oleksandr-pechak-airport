@@ -24,7 +24,7 @@ def create_flight_with_tickets(flight_data: dict):
     try:
         with transaction.atomic():
             flight = Flight.objects.create(**flight_data)
-            seats = AirplaneSeat.objects.filter(airplane=flight.airplane.airplane)
+            seats = AirplaneSeat.objects.filter(airplane=flight.airplane)
             logger.info(f"Found {seats.count()} seats for {flight.id} ")
             Ticket.objects.bulk_create([
                 Ticket(flight_number=flight, flight_seat=seat, price=calculate_price(

@@ -76,7 +76,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
         conversation, contents = await prepare_chat_message_async(self.user, content)
         chunks = []
-        gen = generate_response(contents, ALL_TOOLS)
+        gen = generate_response(contents, ALL_TOOLS, self.user)
         async for chunk in iterate_sync_generator(gen):
             chunks.append(chunk)
             await self.send(json.dumps({"chunk": chunk}))

@@ -8,7 +8,7 @@ from .filters import FlightFilter, TicketFilter, BookingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from users.permissions import IsOwner, IsAdmin
-from .services.flight_service import cancel_booking
+from .services.flight_service import cancel_booking, create_flight_with_tickets
 from rest_framework.decorators import action
 
 
@@ -38,6 +38,8 @@ class FlightViewSet(viewsets.ModelViewSet):
         "ticket_price",
         "flight_number",
     ]
+    def perform_create(self, serializer):
+        create_flight_with_tickets(serializer.validated_data)
     @action(detail=True, methods=['get'])
     def seatmap(self, request, pk=None):
         tickets = Ticket.objects.filter(flight_number_id = pk)

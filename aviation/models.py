@@ -40,6 +40,9 @@ class AirplaneSeat(models.Model):
         default=ClassType.ECONOMY
     )
 
+    def __str__(self):
+        return f"{self.airplane} - Row {self.row} Seat {self.seat}"
+
 class Airline(models.Model):
     name = models.CharField(max_length=50)
     is_active = models.BooleanField(default=True)

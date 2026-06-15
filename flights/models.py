@@ -66,6 +66,9 @@ class Booking(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Booking {self.id} - User: {self.user} - Total: {self.total_price}"
+
 
 
 
@@ -108,3 +111,6 @@ class Ticket(models.Model):
     )
     class Meta:
         unique_together = ('flight_number', 'flight_seat')
+
+    def __str__(self):
+        return f"Ticket {self.id} - {self.flight_number.flight_number} - {self.flight_seat} - {self.ticket_status}"
