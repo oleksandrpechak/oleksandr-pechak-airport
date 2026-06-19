@@ -258,6 +258,10 @@ cython_debug/
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
 poetry.toml
 
+# Ignore database dumps and SQLite files
+*.sql
+*.sqlite3
+*.db
 # ruff
 .ruff_cache/
 

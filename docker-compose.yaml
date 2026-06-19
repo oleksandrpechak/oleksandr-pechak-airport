@@ -16,7 +16,7 @@ services:
   web:
     build: .
     container_name: airport-drf
-    command: python manage.py runserver 0.0.0.0:8000
+    command: daphne -b 0.0.0.0 -p 8000 airport.asgi:application
     volumes:
       - .:/app
     ports:

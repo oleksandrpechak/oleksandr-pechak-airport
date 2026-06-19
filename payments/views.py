@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import PaymentSerializer
 from .services.stripe_service import create_checkout_session
-from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db import transaction
 from .tasks import send_ticket_email

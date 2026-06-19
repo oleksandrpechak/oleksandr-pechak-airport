@@ -1,6 +1,5 @@
 from ..models import Flight, Ticket, Booking
 from  aviation.models import AirplaneSeat
-from users.models import CustomUser
 from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound
 from decimal import Decimal
 from django.db import transaction
@@ -24,7 +23,7 @@ def create_flight_with_tickets(flight_data: dict):
     try:
         with transaction.atomic():
             flight = Flight.objects.create(**flight_data)
-            seats = AirplaneSeat.objects.filter(airplane=flight.airplane.airplane)
+            seats = AirplaneSeat.objects.filter(airplane=flight.airplane)
             logger.info(f"Found {seats.count()} seats for {flight.id} ")
             Ticket.objects.bulk_create([
                 Ticket(flight_number=flight, flight_seat=seat, price=calculate_price(

@@ -1,80 +1,44 @@
 # oleksandr-pechak-airport
-Building Django REST Framework for an Airport
 
-## Apps and models
+A Django REST backend for airport, flight, booking, payment, and AI chat operations.
 
-### users
-- `CustomUser` — extends `AbstractUser`
-  - 'email'
-  - 'firs_name'
-  - 'last_name'
-  - `role` (choices: `ADMIN`, `USER`)
+This project provides a full-featured airport service API with user authentication, flight booking, payment processing, and real-time chat support for airline and travel applications.
 
-### locations
-- `Country`
-  - `country`
-  - `code`
-- `City`
-  - `city`
-  - `country` (ForeignKey to `Country`)
+## Technology Stack
 
-### aviation
-- `Airplane`
-  - `brand`
-  - `model`
-  - 'rows'
-  - 'seats_per_row'
-- 'AirplaneSeat'
-  - 'airplane' (fk)
-  - row
-  - seat
-  - class_type
-- `Airline`
-  - `name`
-  - `is_active`
-  - `founded_year`
-- `Airport`
-  - `name`
-  - `iata_code`
-  - `city` (ForeignKey to `locations.City`)
-  - `airline` (ManyToManyField to `aviation.Airline`)
+- Django
+- Django REST Framework
+- PostgreSQL
+- Docker / docker-compose
+- JWT authentication
+- Stripe payments
+- SMTP email integration
+- WebSockets for real-time chat
+- Gemini AI chat integration
+- Celery + Redis (background tasks)
 
-### flights
-- `Flight`
-  - 'flight_number'
-  - `departure_airport` (ForeignKey to `aviation.Airport`)
-  - `arrival_airport` (ForeignKey to `aviation.Airport`)
-  - `departure_time`
-  - `arrival_time`
-  - 'ticket_price'
-  - `airline_name` (ForeignKey to `aviation.Airline`)
-  - 'airplane' (ForeignKey TO aviation.Airplane)
-  - `flight_status` (choices: `SCHEDULED`, `BOARDING`, `DEPARTED`, `DELAYED`, `CANCELLED`)
-  - 'created_at'
+## Main Features
 
-- 'Booking'
-  - 'user'
-  - 'created_at'
-  - 'status'
-  - 'total_price'
+- CRUD operations for users, locations, aircraft, airlines, airports, flights, bookings, and tickets
+- JWT-based authentication and permission handling
+- API pagination, validation, filtering, and logging
+- Role-based permissions and protected endpoints
+- Stripe payment flows, including service layer, views, and webhook handling
+- ngrok-ready webhook / payment testing support
+- Email notifications via SMTP
+- AI-powered chat using Gemini with WebSocket streaming responses
+- Real-time chat through WebSocket connections
+- API filtering and search for flights, tickets, and bookings
 
-- `Ticket`
-  - 'flight_number' (fk to flight)
-  - `booking` (ForeignKey to `Booking`)
-  - `passenger_name` (ForeignKey to `users.CustomUser`)
-  - `flight_seat`( fk to airplaneseat)
-  - 'price'
-  - `ticket_status` (choices: `BOOKED`, `USED`, `PAID`, `CANCELLED`)
-  unique_together = flight_number + seat
+## Notes
+
+- Payment integration includes Stripe services, views, webhooks, and development-friendly ngrok support.
+- The project supports streamed AI chat responses and interactive tools for chat messaging.
 
 ## Superuser credentials
-Info for log in as a superuser:
+
+Use the following account to access the admin interface during development:
+
 - username: `adminuser`
 - email: `admin@admin.ad`
 - password: `testpass123`
-
-
-tail_number_standard_by_ICAO: One or two character prefix indicating the country of registration (e.g. "N" for the United States, "VH" for Australia)
-A dash "-" is normally (not always) used between the prefix and suffix
-One to five character suffix indicating a particular aircraft within the country
-A sample registration code might be G-XLEE

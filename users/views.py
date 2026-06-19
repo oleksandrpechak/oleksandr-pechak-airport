@@ -8,7 +8,6 @@ from .permissions import IsAdmin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
-
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer

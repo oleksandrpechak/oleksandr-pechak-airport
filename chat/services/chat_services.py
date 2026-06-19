@@ -1,17 +1,12 @@
 from ..models import Message, Conversation
-from ...users.models import CustomUser
-from django.conf import settings
+from users.models import CustomUser
 from django.utils.timezone import now
-from django.db import transaction
-from google import genai
 from datetime import timedelta
 from ..tasks import summarize_conversation
-from .gemini import generate_response
-from ..tools import ALL_TOOLS
 
 
 
-def handle_chat_message(user: CustomUser, content:str):
+def prepare_chat_context(user: CustomUser, content:str):
     cutoff = now() - timedelta(minutes=15)
     conversation = (
         Conversation.objects.filter(
@@ -21,7 +16,6 @@ def handle_chat_message(user: CustomUser, content:str):
     )
     if not conversation:
         conversation = Conversation.objects.create(user = user)
-
     message = Message.objects.create(
         conversation = conversation,
         role = Message.Role.USER,
@@ -49,28 +43,17 @@ def handle_chat_message(user: CustomUser, content:str):
             "role": m.role,
             "parts": [{"text": m.content}]
             })
-    response_text = generate_response(contents, ALL_TOOLS)
-
+    return (conversation, contents)
+    
+def save_chat_response(conversation, response_text):
     message = Message.objects.create(
         conversation = conversation,
         role = Message.Role.MODEL,
         content = response_text,
-    )
+        )
     return response_text
 
 
 
 
 
-
-"""
-    1. Find active conversation (last_activity_at within 15 min) or create new one
-    2. Save user message to DB
-    3. Update conversation.last_activity_at
-    4. If message count % 5 == 0: generate and store summary on Conversation
-    5. Build context: summary (if exists) + messages since last summary
-    6. Send context + user message to Gemini
-    7. If Gemini returns function_call: execute tool, send result back to Gemini
-    8. Save Gemini final response as Message with role="model"
-    9. Return response text
-"""

@@ -1,7 +1,6 @@
 from django.db import models
 
 
-
 class Flight(models.Model):
     class FlightStatus(models.TextChoices):
         SCHEDULED = "SCHEDULED", "scheduled"
@@ -9,7 +8,6 @@ class Flight(models.Model):
         DEPARTED = "DEPARTED", "departed"
         DELAYED = "DELAYED", "delayed"
         CANCELLED = "CANCELLED", "cancelled"
-
     flight_number = models.CharField(max_length=5)
     departure_airport = models.ForeignKey(
         "aviation.Airport", on_delete=models.PROTECT,
@@ -42,8 +40,6 @@ class Flight(models.Model):
         return f"{self.departure_airport} >> {self.arrival_airport}" 
 
 
-
-
 class Booking(models.Model):
     class BookingStatus(models.TextChoices):
         PENDING = "PENDING", "pending"
@@ -66,7 +62,8 @@ class Booking(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-
+    def __str__(self):
+        return f"Booking {self.id} - User: {self.user} - Total: {self.total_price}"
 
 
 class Ticket(models.Model):
@@ -108,3 +105,5 @@ class Ticket(models.Model):
     )
     class Meta:
         unique_together = ('flight_number', 'flight_seat')
+    def __str__(self):
+        return f"Ticket {self.id} - {self.flight_number.flight_number} - {self.flight_seat} - {self.ticket_status}"
