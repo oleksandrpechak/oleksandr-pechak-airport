@@ -5,7 +5,6 @@ from django.core.validators import RegexValidator
 
 
 class CountrySerializer(serializers.ModelSerializer):
-    # check if code contain exactly 2 uppercase letters (ISO alpha-2 code)
     code = serializers.CharField(
         max_length = 2,
         validators = [

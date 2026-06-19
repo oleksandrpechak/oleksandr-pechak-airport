@@ -13,25 +13,17 @@ def execute_tool(name: str, args: dict, user=None):
         raise ValueError(f"Unknown tool: {name}")
     result = func_to_call(**args, user=user)
 
-    # Normalize result into JSON-serializable primitives to avoid
-    # passing Django model instances / QuerySets (e.g. AirplaneSeat)
-    # back to the caller (Gemini) which may attempt to join/serialize them.
     def serialize(obj):
         from decimal import Decimal
         from django.db.models.query import QuerySet
-
-        # primitives
         if obj is None or isinstance(obj, (str, int, float, bool)):
             return obj
         if isinstance(obj, Decimal):
             return float(obj)
-        # QuerySets -> list
         if isinstance(obj, QuerySet):
             return [serialize(item) for item in list(obj)]
-        # lists/tuples
         if isinstance(obj, (list, tuple)):
             return [serialize(item) for item in obj]
-        # Django model instance: return dict with id and string repr
         if hasattr(obj, "_meta"):
             data = {"model": obj.__class__.__name__}
             try:
@@ -50,8 +42,6 @@ def execute_tool(name: str, args: dict, user=None):
             return None
 
     return serialize(result)
- 
-
 
 get_flights_declaration = types.FunctionDeclaration(
     name="get_flights",
@@ -150,8 +140,6 @@ def book_ticket(flight_id, num_tickets, user=None):
     except Exception as e:
         logger.exception(f"Error creating booking: {e}")
         raise
-
-
 
 tools_map = {
     "get_flights": get_flights,

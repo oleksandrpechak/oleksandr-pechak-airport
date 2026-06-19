@@ -1,6 +1,5 @@
 from ..models import Flight, Ticket, Booking
 from  aviation.models import AirplaneSeat
-from users.models import CustomUser
 from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound
 from decimal import Decimal
 from django.db import transaction

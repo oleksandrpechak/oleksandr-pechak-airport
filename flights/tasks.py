@@ -1,7 +1,6 @@
 from celery import shared_task
 from .models import Booking, Ticket
 from django.db import transaction
-from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound
 import logging
 
 

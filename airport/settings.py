@@ -14,14 +14,9 @@ from datetime import timedelta
 from pathlib import Path
 from decouple import config
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -29,13 +24,7 @@ DEBUG = True
 
 
 ALLOWED_HOSTS = ['*']
-# config(
-#     "ALLOWED_HOSTS",
-#     cast=lambda v: [host.strip() for host in v.split(",")]
-# )
 
-
-# Application definition
 
 INSTALLED_APPS = [
     'daphne',
@@ -85,6 +74,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',
         'user': '1000/day',
+        'chat': '5/minute'
     }
 }
 
@@ -125,9 +115,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'airport.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -139,9 +126,6 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -159,9 +143,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/4.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -170,20 +151,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.1/howto/static-files/
-
 STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# NEW : Implementation of CustomerUser
 AUTH_USER_MODEL = "users.CustomUser"
-
 
 LOGGING = {
     "version": 1,
@@ -227,7 +199,7 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [
                 {
-                    "address": "redis://redis:6379",
+                    "address": config("REDIS_URI"),
                     "socket_timeout": 20,
                     "socket_connect_timeout": 10,
                     "retry_on_timeout": True,
@@ -269,3 +241,5 @@ SIMPLE_JWT = {
 }
 
 GOOGLE_API_KEY=config("GOOGLE_API_KEY")
+TEMPERATURE=config("TEMPERATURE")
+MODEL=config("MODEL")

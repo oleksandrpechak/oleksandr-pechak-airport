@@ -16,14 +16,9 @@ class FlightSerializer(serializers.ModelSerializer):
         The main coordinator.
         """
         errors = {}
-        # rule 1
         self._validate_timestamps(attrs, errors)
-        # rule 2
         self._validate_airports(attrs, errors)
-        # rule 3
         self._validate_fleet_item(attrs, errors)
-
-
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
@@ -48,7 +43,6 @@ class FlightSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Ticket
         fields = [

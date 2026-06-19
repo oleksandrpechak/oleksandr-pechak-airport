@@ -1,5 +1,5 @@
-from .models import Conversation, Message
-from .serializers import MessageSerializer, ConversationSerializer
+from .models import Conversation
+from .serializers import ConversationSerializer
 from .services.chat_services import prepare_chat_context, save_chat_response
 from .services.gemini import generate_response
 from .tools import ALL_TOOLS
@@ -8,9 +8,8 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.viewsets import mixins
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from users.permissions import IsOwner, IsAdmin
-from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 import logging
 
 
@@ -22,8 +21,9 @@ class ConversationViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
     ):
+    permission_classes = [IsAuthenticated]
     serializer_class = ConversationSerializer
-
+    
     def get_queryset(self):
         return Conversation.objects.filter(user=self.request.user)
     
@@ -32,6 +32,8 @@ class ConversationViewSet(
     
 class ChatAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'chat'
 
     def post(self, request):
         content = request.data.get('content')
