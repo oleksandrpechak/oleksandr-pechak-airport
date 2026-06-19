@@ -262,6 +262,7 @@ poetry.toml
 *.sql
 *.sqlite3
 *.db
+*.rdb
 # ruff
 .ruff_cache/
 
