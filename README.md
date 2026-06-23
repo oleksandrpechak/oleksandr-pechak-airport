@@ -42,3 +42,13 @@ Use the following account to access the admin interface during development:
 - username: `adminuser`
 - email: `admin@admin.ad`
 - password: `testpass123`
+
+## Tests
+
+- **Total unit tests:** 39
+
+- **Tests by app:**
+	- **chat**: 10 tests — models referenced: `Conversation`, `Message` (from `chat.models`)
+	- **aviation**: 5 tests — models referenced: `AirplaneSeat` (from `aviation.models`)
+	- **flights**: 17 tests — models referenced: `Ticket`, `Booking` (from `flights.models`). Test utilities also import `Airport`, `Airline`, `FleetItem` (from `aviation.models`) and `Country`, `City` (from `locations.models`) in tests utilities.
+	- **payments**: 7 tests — models referenced: `Payment` (from `payments.models`) and `Ticket`, `Booking` (from `flights.models`)

@@ -1,8 +1,8 @@
-from ..models import Message, Conversation
+from chat.models import Message, Conversation
 from users.models import CustomUser
 from django.utils.timezone import now
 from datetime import timedelta
-from ..tasks import summarize_conversation
+from chat.tasks import summarize_conversation
 
 
 

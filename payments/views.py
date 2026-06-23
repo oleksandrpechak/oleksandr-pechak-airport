@@ -9,7 +9,7 @@ from .serializers import PaymentSerializer
 from .services.stripe_service import create_checkout_session
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db import transaction
-from .tasks import send_ticket_email
+from payments.tasks import send_ticket_email
 import logging
 from rest_framework.throttling import UserRateThrottle
 
@@ -95,7 +95,7 @@ class WebhookView(APIView):
                         booking.user.email
                     )
                 )
-        elif event['type'] == 'chekout.session.expired':
+        elif event['type'] == 'checkout.session.expired':
             session = event['data']['object']
             booking_id = session['metadata']['booking_id']
             with transaction.atomic():
