@@ -7,6 +7,14 @@ class AirplaneSerializer(serializers.ModelSerializer):
         model = Airplane
         fields = '__all__'
         read_only_fields = ["id"]
+        
+    def validate_business_rows_percent(self, value):
+        if value < 1 or value > 50:
+            raise serializers.ValidationError(
+                "Business rows percent must be between 1 and 50."
+            )
+        return value
+
     def create(self, validated_data):
         return create_airplane_with_seats(validated_data)
 

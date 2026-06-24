@@ -49,6 +49,8 @@ class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
 
     def get_queryset(self):
+        if self.request.user.role == 'ADMIN':
+            return Ticket.objects.all()
         return Ticket.objects.filter(passenger_name=self.request.user)
     def get_permissions(self):
         if self.action == 'retrieve':

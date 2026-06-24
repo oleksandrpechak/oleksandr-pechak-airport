@@ -8,4 +8,5 @@ class IsAdmin(BasePermission):
     
 class IsOwner(BasePermission):
     def has_object_permission(self, request, view, obj):
-        return obj.user == request.user
+        owner = getattr(obj, 'user', None) or getattr(obj, 'passenger_name', None)
+        return owner == request.user
