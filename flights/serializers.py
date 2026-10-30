@@ -1,7 +1,6 @@
 from decimal import Decimal
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
-from drf_spectacular.types import OpenApiTypes
 from .models import Flight, Ticket, Booking
 from aviation.models import Airport, Airline, FleetItem
 from payments.models import Payment
@@ -92,7 +91,7 @@ class FlightReadSerializer(serializers.ModelSerializer):
             "available_seats", "created_at",
         ]
 
-    @extend_schema_field(OpenApiTypes.DECIMAL)
+    @extend_schema_field(serializers.DecimalField(max_digits=10, decimal_places=2))
     def get_business_price(self, flight):
         price = calculate_price(flight.ticket_price, "BUSINESS", flight)
         return str(price.quantize(Decimal("0.01")))
@@ -151,7 +150,7 @@ class BookingSerializer(serializers.ModelSerializer):
         payment = getattr(booking, "payment", None)
         return BookingPaymentSerializer(payment).data if payment else None
 
-    @extend_schema_field(OpenApiTypes.DATETIME)
+    @extend_schema_field(serializers.DateTimeField(allow_null=True))
     def get_expires_at(self, booking):
         if booking.status != Booking.BookingStatus.PENDING:
             return None

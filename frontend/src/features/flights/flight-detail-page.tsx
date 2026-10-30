@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 import { ArrowLeft, Plane } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { PageHeader } from '@/components/layout/page-header';
@@ -9,14 +9,15 @@ import { ErrorState } from '@/components/states/error-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Flight, FlightAirport } from '@/lib/api/schema';
+import { SeatSelection } from '@/features/bookings/seat-selection';
+import type { Flight, FlightAirport, SeatMapSeat } from '@/lib/api/schema';
 import { formatDuration, formatLongDate, formatMoney, formatTime } from '@/lib/format';
 import { usePageCrumb } from '@/stores/ui';
 
 import { useFlight, useSeatMap } from './api';
 import { FlightStatusBadge } from './flight-status-badge';
 import { SeatMap } from './seat-map';
-import { cabinLabel, summarizeSeats } from './seats';
+import { cabinLabel, seatState, summarizeSeats } from './seats';
 
 function BackLink() {
   return (
@@ -61,6 +62,16 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** Why a flight can't be booked, or undefined when it can. */
+function bookingClosedReason(flight: Flight, now = Date.now()): string | undefined {
+  if (flight.flight_status === 'CANCELLED') return 'This flight is cancelled.';
+  if (flight.flight_status === 'DEPARTED' || new Date(flight.departure_time).getTime() <= now) {
+    return 'This flight has already departed.';
+  }
+  if (flight.available_seats === 0) return 'This flight is full.';
+  return undefined;
+}
+
 function RouteCard({ flight }: { flight: Flight }) {
   return (
     <Card>
@@ -88,6 +99,23 @@ export function FlightDetailPage() {
   const flight = useFlight(flightId);
   const seatMap = useSeatMap(flightId);
   usePageCrumb(flight.data?.flight_number);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
+
+  // Only seats that are still free count: a refresh may have taken some away.
+  const selected = useMemo<SeatMapSeat[]>(
+    () =>
+      (seatMap.data ?? []).filter(
+        (s) => selectedIds.has(s.id) && seatState(s.ticket_status) === 'available',
+      ),
+    [seatMap.data, selectedIds],
+  );
+  const toggle = (seat: SeatMapSeat) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(seat.id)) next.delete(seat.id);
+      else next.add(seat.id);
+      return next;
+    });
 
   if (
     !Number.isInteger(flightId) ||
@@ -127,6 +155,7 @@ export function FlightDetailPage() {
   }
 
   const f = flight.data;
+  const closedReason = bookingClosedReason(f);
   const cabins = seatMap.data ? summarizeSeats(seatMap.data) : [];
 
   return (
@@ -160,13 +189,23 @@ export function FlightDetailPage() {
                   description="The aircraft has no seat layout, so no tickets were issued."
                 />
               ) : (
-                <SeatMap seats={seatMap.data} />
+                <SeatMap
+                  seats={seatMap.data}
+                  selectedIds={new Set(selected.map((s) => s.id))}
+                  onToggle={closedReason ? undefined : toggle}
+                />
               )}
             </CardContent>
           </Card>
         </div>
 
         <div className="space-y-4">
+          <SeatSelection
+            selected={selected}
+            onRemove={toggle}
+            onClear={() => setSelectedIds(new Set())}
+            closedReason={closedReason}
+          />
           <Card className="gap-2">
             <CardHeader>
               <CardTitle>Availability</CardTitle>

@@ -20,6 +20,10 @@ const PAGES: Record<string, LazyPage> = {
   '/flights': () =>
     import('@/features/flights/flights-page').then((m) => ({ Component: m.FlightsPage })),
   '/board': () => import('@/features/flights/board-page').then((m) => ({ Component: m.BoardPage })),
+  '/bookings': () =>
+    import('@/features/bookings/bookings-page').then((m) => ({ Component: m.BookingsPage })),
+  '/payments': () =>
+    import('@/features/payments/payments-page').then((m) => ({ Component: m.PaymentsPage })),
 };
 
 const navRoutes = (adminOnly: boolean): RouteObject[] =>
@@ -53,6 +57,27 @@ export const routes: RouteObject[] = [
         element: <AppShell />,
         children: [
           ...navRoutes(false),
+          {
+            path: 'bookings/:bookingId',
+            lazy: () =>
+              import('@/features/bookings/booking-detail-page').then((m) => ({
+                Component: m.BookingDetailPage,
+              })),
+          },
+          {
+            path: 'payments/success',
+            lazy: () =>
+              import('@/features/payments/checkout-return-pages').then((m) => ({
+                Component: m.CheckoutSuccessPage,
+              })),
+          },
+          {
+            path: 'payments/cancel',
+            lazy: () =>
+              import('@/features/payments/checkout-return-pages').then((m) => ({
+                Component: m.CheckoutCancelPage,
+              })),
+          },
           {
             path: 'flights/:flightId',
             lazy: () =>

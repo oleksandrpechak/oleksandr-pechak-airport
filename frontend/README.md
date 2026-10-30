@@ -111,6 +111,9 @@ src/
     airlines/                airlines list (public /api/aviation/airlines/)
     flights/                 flights list + URL filters, flight detail + seat map,
                              departures/arrivals board (30s auto-refresh)
+    bookings/                seat selection + booking, bookings list, booking detail
+                             (hold countdown, pay, cancel)
+    payments/                payments by booking, Stripe Checkout return pages
   lib/api/                   axios client, token store, error parsing, schema aliases
   stores/ui.ts               Zustand: theme, sidebar, palette (client state only)
   types/api.d.ts             GENERATED — do not edit
@@ -155,7 +158,22 @@ The base font size is 14px for a dense console layout.
 - **768–1023px (tablet):** icon rail, with the full navigation in a drawer from the top-bar
   menu button.
 
-## Known backend gaps (phase 2)
+## Payments (Stripe Checkout)
+
+1. "Pay" calls `POST /api/payments/pay/{booking_id}/`. The response key really is `chekout_url`.
+2. The app sends the browser to that Stripe URL. It first saves the booking id in
+   `sessionStorage`, so the return page knows which booking to show.
+3. Stripe sends the user back to the URLs set in the backend's `.env`. Point them at the
+   frontend:
+   ```
+   STRIPE_SUCCESS_URL=http://localhost:5173/payments/success
+   STRIPE_CANCEL_URL=http://localhost:5173/payments/cancel
+   ```
+4. The success page polls the booking until Stripe's webhook confirms it, for up to 30
+   seconds. Locally, run `stripe listen --forward-to localhost:8000/api/payments/webhook/` so
+   the webhook arrives.
+
+## Known backend gaps
 
 - **Flight status can't change through the API.** `flight_status` is read-only in every
   serializer, and no task or endpoint updates it. The board and lists show whatever is in the
@@ -165,3 +183,8 @@ The base font size is 14px for a dense console layout.
   arrivals board asks for a departure window one day wider and trims the results to the
   selected day on the client.
 - **No gate data.** The board has no gate column because the API has no gate field.
+- **No payments list endpoint.** `/payments` lists bookings, since each booking embeds its
+  `payment`.
+- **Cancelling a paid booking.** `POST /bookings/{id}/cancel/` also accepts CONFIRMED (paid)
+  bookings. It releases the seats but issues no refund, so the UI offers Cancel only while a
+  booking is pending.

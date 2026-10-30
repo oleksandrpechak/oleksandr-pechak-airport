@@ -48,3 +48,15 @@ export type FlightListParams = NonNullable<
 export type SeatMapSeat = Schemas['SeatMap'];
 export type TicketStatus = Schemas['TicketStatusEnum'];
 export type SeatClass = Schemas['ClassTypeEnum'];
+
+export type Booking = Schemas['Booking'];
+export type BookingTicket = Schemas['BookingTicket'];
+export type BookingPayment = Schemas['BookingPayment'];
+export type BookingStatus = Schemas['BookingStatusEnum'];
+export type PaymentStatus = Schemas['PaymentStatusEnum'];
+export type BookingCreateRequest = Schemas['BookingCreate'];
+/** `POST /api/payments/pay/{id}/`. The key really is spelled `chekout_url`. */
+export type CheckoutSession = Schemas['CheckoutSession'];
+export type BookingListParams = NonNullable<
+  paths['/api/flights/bookings/']['get']['parameters']['query']
+>;

@@ -135,6 +135,7 @@ class BookingViewSet(
             return [IsAuthenticated(), IsOwner()]
         return [IsAuthenticated()]
 
+    @extend_schema(request=BookingCreateSerializer, responses={201: BookingSerializer})
     def create(self, request, *args, **kwargs):
         serializer = BookingCreateSerializer(
             data=request.data,

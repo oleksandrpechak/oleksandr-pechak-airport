@@ -15,6 +15,7 @@ afterEach(() => {
   useTokenStore.setState({ access: null, refresh: null });
   useUiStore.setState(initialUi, true);
   localStorage.clear();
+  sessionStorage.clear();
 });
 
 // jsdom lacks these; Radix and our media-query hooks need them.

@@ -24,7 +24,7 @@ export function makeFlight(overrides: Partial<Flight> = {}): Flight {
     departure_time: '2026-10-30T08:00:00Z',
     arrival_time: '2026-10-30T09:35:00Z',
     ticket_price: '120.00',
-    business_price: '180.00' as unknown as number, // the API sends a string here
+    business_price: '180.00',
     business_percent: 50,
     airline_name: { id: 1, name: 'SkyUp' },
     airplane: { id: 1, tail_number: 'UR-SQA', brand: 'Boeing', model: '737-800' },

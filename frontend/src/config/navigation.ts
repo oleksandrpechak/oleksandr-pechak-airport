@@ -71,7 +71,6 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Ticket,
         description: 'Bookings, tickets and cancellations.',
         keywords: ['tickets', 'reservations'],
-        plannedPhase: 3,
       },
       {
         title: 'Payments',
@@ -79,7 +78,6 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: CreditCard,
         description: 'Checkout sessions and payment status.',
         keywords: ['stripe', 'checkout'],
-        plannedPhase: 3,
       },
     ],
   },

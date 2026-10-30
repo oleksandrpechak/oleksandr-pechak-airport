@@ -621,9 +621,12 @@ export interface components {
             /** Format: decimal */
             readonly total_price: string;
             /** Format: date-time */
-            readonly expires_at: string;
+            readonly expires_at: string | null;
             readonly tickets: components["schemas"]["BookingTicket"][];
             readonly payment: components["schemas"]["BookingPayment"] | null;
+        };
+        BookingCreate: {
+            ticket_ids: number[];
         };
         BookingPayment: {
             readonly id: number;
@@ -758,8 +761,8 @@ export interface components {
             arrival_time: string;
             /** Format: decimal */
             ticket_price: string;
-            /** Format: double */
-            readonly business_price: number;
+            /** Format: decimal */
+            readonly business_price: string;
             business_percent: number;
             airline_name: components["schemas"]["FlightAirline"];
             airplane: components["schemas"]["FlightAirplane"];
@@ -2024,11 +2027,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
-                "application/json": components["schemas"]["Booking"];
-                "application/x-www-form-urlencoded": components["schemas"]["Booking"];
-                "multipart/form-data": components["schemas"]["Booking"];
+                "application/json": components["schemas"]["BookingCreate"];
+                "application/x-www-form-urlencoded": components["schemas"]["BookingCreate"];
+                "multipart/form-data": components["schemas"]["BookingCreate"];
             };
         };
         responses: {

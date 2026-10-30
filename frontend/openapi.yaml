@@ -1018,13 +1018,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Booking'
+              $ref: '#/components/schemas/BookingCreate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Booking'
+              $ref: '#/components/schemas/BookingCreate'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Booking'
+              $ref: '#/components/schemas/BookingCreate'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -2629,6 +2630,7 @@ components:
         expires_at:
           type: string
           format: date-time
+          nullable: true
           readOnly: true
         tickets:
           type: array
@@ -2649,6 +2651,16 @@ components:
       - tickets
       - total_price
       - user
+    BookingCreate:
+      type: object
+      properties:
+        ticket_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+      required:
+      - ticket_ids
     BookingPayment:
       type: object
       properties:
@@ -2981,8 +2993,9 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
         business_price:
-          type: number
-          format: double
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
           readOnly: true
         business_percent:
           type: integer

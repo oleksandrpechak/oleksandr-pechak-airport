@@ -20,11 +20,21 @@ const seatClass: Record<SeatState, string> = {
     'border-dashed border-muted-foreground/40 bg-transparent text-muted-foreground/60 line-through',
 };
 
+const SELECTED_CLASS = 'border-primary bg-primary text-primary-foreground hover:bg-primary/90';
+
+export interface SeatMapProps {
+  seats: SeatMapSeat[];
+  /** Ticket ids currently picked. */
+  selectedIds?: ReadonlySet<number>;
+  /** Makes available seats clickable. Omit for a read-only map. */
+  onToggle?: (seat: SeatMapSeat) => void;
+}
+
 /**
- * Read-only cabin layout. Rows run top (nose) to bottom; the aisle sits in the
- * middle of each row. Seat letters come from the data, so any layout works.
+ * Cabin layout. Rows run top (nose) to bottom; the aisle sits in the middle of
+ * each row. Seat letters come from the data, so any layout works.
  */
-export function SeatMap({ seats }: { seats: SeatMapSeat[] }) {
+export function SeatMap({ seats, selectedIds, onToggle }: SeatMapProps) {
   const { rows, letters } = useMemo(() => {
     const letterSet = new Set<string>();
     const byRow = new Map<number, Map<string, SeatMapSeat>>();
@@ -54,6 +64,12 @@ export function SeatMap({ seats }: { seats: SeatMapSeat[] }) {
             {STATE_LABEL[state]}
           </li>
         ))}
+        {onToggle && (
+          <li className="flex items-center gap-1.5">
+            <span className={cn('inline-block size-3.5 rounded-sm border', SELECTED_CLASS)} />
+            Selected
+          </li>
+        )}
       </ul>
 
       <div className="overflow-x-auto">
@@ -104,7 +120,15 @@ export function SeatMap({ seats }: { seats: SeatMapSeat[] }) {
                     const seat = rowSeats.get(letter);
                     return (
                       <Fragment key={letter}>
-                        {seat ? <Seat seat={seat} /> : <span role="gridcell" />}
+                        {seat ? (
+                          <Seat
+                            seat={seat}
+                            selected={selectedIds?.has(seat.id) ?? false}
+                            onToggle={onToggle}
+                          />
+                        ) : (
+                          <span role="gridcell" />
+                        )}
                         {i === aisleAfter && <span aria-hidden />}
                       </Fragment>
                     );
@@ -125,24 +149,47 @@ export function SeatMap({ seats }: { seats: SeatMapSeat[] }) {
   );
 }
 
-function Seat({ seat }: { seat: SeatMapSeat }) {
+function Seat({
+  seat,
+  selected,
+  onToggle,
+}: {
+  seat: SeatMapSeat;
+  selected: boolean;
+  onToggle?: (seat: SeatMapSeat) => void;
+}) {
   const state = seatState(seat.ticket_status);
   const label = `${seat.row}${seat.seat}, ${cabinLabel(seat.class_type)}, ${STATE_LABEL[state].toLowerCase()}, ${formatMoney(seat.price)}`;
+  const className = cn(
+    'grid h-7 w-full place-items-center rounded-md border text-[11px] font-medium transition-colors',
+    seat.class_type === 'BUSINESS' && 'h-8',
+    selected ? SELECTED_CLASS : seatClass[state],
+  );
+  const selectable = Boolean(onToggle) && state === 'available';
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          role="gridcell"
-          aria-label={label}
-          tabIndex={-1}
-          className={cn(
-            'grid h-7 place-items-center rounded-md border text-[11px] font-medium transition-colors',
-            seat.class_type === 'BUSINESS' && 'h-8',
-            seatClass[state],
-          )}
-        >
-          {seat.seat}
-        </span>
+        {selectable ? (
+          <span role="gridcell" aria-selected={selected}>
+            <button
+              type="button"
+              aria-label={label}
+              aria-pressed={selected}
+              onClick={() => onToggle?.(seat)}
+              className={cn(
+                className,
+                'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              )}
+            >
+              {seat.seat}
+            </button>
+          </span>
+        ) : (
+          <span role="gridcell" aria-label={label} tabIndex={-1} className={className}>
+            {seat.seat}
+          </span>
+        )}
       </TooltipTrigger>
       <TooltipContent>
         <span className="font-mono font-semibold">
