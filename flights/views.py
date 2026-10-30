@@ -1,21 +1,46 @@
 from .models import Flight, Ticket, Booking
-from .serializers import FlightSerializer, TicketSerializer, BookingSerializer, BookingCreateSerializer, SeatMapSerializer
+from .serializers import (
+    FlightSerializer, FlightReadSerializer, TicketSerializer, BookingSerializer,
+    BookingCreateSerializer, SeatMapSerializer
+)
+from django.db.models import Count, Q
+from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.filters import SearchFilter, OrderingFilter
-from .filters import FlightFilter, TicketFilter
+from .filters import FlightFilter, TicketFilter, BookingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from users.permissions import IsOwner, IsAdmin
-from .services.flight_service import cancel_booking, create_flight_with_tickets
+from .services.flight_service import cancel_booking
 from rest_framework.decorators import action
 
 
 class FlightViewSet(viewsets.ModelViewSet):
     queryset = Flight.objects.all()
     serializer_class = FlightSerializer
-    
+
+    def get_queryset(self):
+        return (
+            Flight.objects.select_related(
+                "departure_airport__city__country",
+                "arrival_airport__city__country",
+                "airplane__airplane",
+                "airline_name",
+            )
+            .annotate(available_seats=Count(
+                "tickets",
+                filter=Q(tickets__ticket_status=Ticket.TicketStatus.AVAILABLE)
+            ))
+            .order_by("departure_time", "id")
+        )
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return FlightReadSerializer
+        return FlightSerializer
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'seatmap']:
             return [AllowAny()]
@@ -28,19 +53,31 @@ class FlightViewSet(viewsets.ModelViewSet):
     filterset_class = FlightFilter
     search_fields = [
         "flight_number",
-        "departure_airport",
-        "arrival_airport",
+        "departure_airport__name",
+        "departure_airport__iata_code",
+        "departure_airport__city__city",
+        "arrival_airport__name",
+        "arrival_airport__iata_code",
+        "arrival_airport__city__city",
+        "airline_name__name",
     ]
 
     ordering_fields = [
         "ticket_price",
         "flight_number",
+        "departure_time",
+        "arrival_time",
+        "available_seats",
     ]
-    def perform_create(self, serializer):
-        create_flight_with_tickets(serializer.validated_data)
+
+    @extend_schema(responses=SeatMapSerializer(many=True))
     @action(detail=True, methods=['get'])
     def seatmap(self, request, pk=None):
-        tickets = Ticket.objects.filter(flight_number_id = pk)
+        flight = self.get_object()
+        tickets = (
+            flight.tickets.select_related("flight_seat")
+            .order_by("flight_seat__row", "flight_seat__seat")
+        )
         return Response(SeatMapSerializer(tickets, many=True).data, status=status.HTTP_200_OK)
 
 
@@ -66,9 +103,32 @@ class TicketViewSet(viewsets.ModelViewSet):
     ]
     filterset_class = TicketFilter
 
-class BookingViewSet(viewsets.ModelViewSet):
+class BookingViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+
+    filterset_class = BookingFilter
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    ordering_fields = ["created_at", "total_price"]
+
+    def get_queryset(self):
+        queryset = (
+            Booking.objects.select_related("payment")
+            .prefetch_related(
+                "tickets__flight_seat",
+                "tickets__flight_number__departure_airport",
+                "tickets__flight_number__arrival_airport",
+            )
+            .order_by("-created_at")
+        )
+        if self.request.user.role == 'ADMIN':
+            return queryset
+        return queryset.filter(user=self.request.user)
 
     def get_permissions(self):
         if self.action == 'cancel':

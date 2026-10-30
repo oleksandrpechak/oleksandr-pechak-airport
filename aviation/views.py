@@ -4,9 +4,8 @@ from .filters import AirplaneFilter, AirlineFilter, AirportFilter, AirplaneSeatF
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from users.permissions import IsAdmin
-from .services.airplane_seat_service import create_airplane_with_seats
 
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
@@ -26,9 +25,6 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     ordering_fields = [
         "brand", "model", "rows", "seats_per_row"
     ]
-    def perform_create(self, serializer):
-        validated_data = serializer.validated_data
-        create_airplane_with_seats(validated_data)
 
 class AirplaneSeatViewSet(viewsets.ModelViewSet):
     queryset = AirplaneSeat.objects.all()
@@ -47,18 +43,26 @@ class AirplaneSeatViewSet(viewsets.ModelViewSet):
 class AirlineViewSet(viewsets.ModelViewSet):
     queryset = Airline.objects.all()
     serializer_class = AirlineSerializer
-    permission_classes = [IsAuthenticated, IsAdmin]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdmin()]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
         OrderingFilter,
     ]
     filterset_class = AirlineFilter
+    search_fields = ["name"]
+    ordering_fields = ["name", "founded_year"]
 
 class AirportViewSet(viewsets.ModelViewSet):
-    queryset = Airport.objects.all()
+    queryset = Airport.objects.select_related("city__country").prefetch_related("airline")
     serializer_class = AirportSerializer
-    permission_classes = [IsAuthenticated, IsAdmin]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdmin()]
     filter_backends = [
         DjangoFilterBackend,
         SearchFilter,
@@ -66,11 +70,11 @@ class AirportViewSet(viewsets.ModelViewSet):
     ]
     filterset_class = AirportFilter
     search_fields = [
-        "name", "model", "rows", "seats_per_row"
+        "name", "iata_code", "city__city", "city__country__country"
     ]
 
     ordering_fields = [
-        "brand", "model", "rows", "seats_per_row"
+        "name", "iata_code"
     ]
  
 class FleetItemViewSet(viewsets.ModelViewSet):

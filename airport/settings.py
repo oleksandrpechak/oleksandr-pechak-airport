@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'corsheaders',
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -62,8 +63,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 5,
+    'DEFAULT_PAGINATION_CLASS': 'airport.pagination.DefaultLimitOffsetPagination',
+    'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
@@ -72,8 +73,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
+        'anon': config("THROTTLE_ANON_RATE", default="60/minute"),
+        'user': config("THROTTLE_USER_RATE", default="120/minute"),
         'chat': '5/minute'
     }
 }
@@ -81,12 +82,25 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "Airport API",
     "DESCRIPTION": "API for managing flights, tickets, airports",
-    "VERSION": "1.0.0"
+    "VERSION": "1.0.0",
+    "ENUM_NAME_OVERRIDES": {
+        "BookingStatusEnum": "flights.models.Booking.BookingStatus",
+        "PaymentStatusEnum": "payments.models.Payment.PaymentStatus",
+    },
 }
+
+FRONTEND_ORIGINS = config(
+    "FRONTEND_ORIGINS",
+    default="http://localhost:5173,http://localhost:3000",
+    cast=Csv()
+)
+CORS_ALLOWED_ORIGINS = FRONTEND_ORIGINS
+CSRF_TRUSTED_ORIGINS = FRONTEND_ORIGINS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
