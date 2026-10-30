@@ -3,3 +3,6 @@ dist
 coverage
 *.local
 *.tsbuildinfo
+
+# The repo root .gitignore (Python template) ignores every `lib/` directory.
+!src/lib/
