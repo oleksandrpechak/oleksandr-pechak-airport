@@ -2,13 +2,16 @@ from flights.models import Flight, Ticket, Booking
 from aviation.models import AirplaneSeat
 from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound
 from decimal import Decimal
+from datetime import timedelta
 from django.db import transaction
-from django.db.models import Sum
 import logging
 from flights.tasks import cancel_unpaid_booking
 
 
 logger = logging.getLogger(__name__)
+
+# Unpaid bookings are cancelled after this window (see flights.tasks).
+BOOKING_PAYMENT_WINDOW = timedelta(minutes=30)
 
 
 def calculate_price(base_price: Decimal, class_type: str, flight: Flight) -> Decimal:
@@ -43,28 +46,44 @@ def create_flight_with_tickets(flight_data: dict):
 def create_booking(user, ticket_ids: list) -> Booking:
     try:
         with transaction.atomic():
-            tickets = Ticket.objects.filter(id__in = ticket_ids)
+            tickets = list(
+                Ticket.objects.select_for_update()
+                .filter(id__in = ticket_ids)
+                .order_by('id')
+            )
             logger.info(f"User {user} started to book these tickets {ticket_ids}")
-            existing_ids = tickets.values_list('id', flat=True)
-            missing_ids = set(ticket_ids) - set(existing_ids)
+            if not ticket_ids:
+                raise ValidationError("At least one ticket is required")
+            existing_ids = {ticket.id for ticket in tickets}
+            missing_ids = set(ticket_ids) - existing_ids
             if missing_ids:
                 raise ValidationError(f"Tickets {list(missing_ids)} do not exist")
             
-            unavailable = tickets.exclude(ticket_status="AVAILABLE").values_list('id', flat=True)
-            if unavailable.exists():
-                raise ValidationError(f"Tickets {list(unavailable)} are not available")
+            unavailable = [
+                ticket.id for ticket in tickets
+                if ticket.ticket_status != "AVAILABLE"
+            ]
+            if unavailable:
+                raise ValidationError(f"Tickets {unavailable} are not available")
             
             booking = Booking.objects.create(
                 user=user,
-                total_price = tickets.aggregate(total = Sum('price'))['total']
+                total_price = sum(ticket.price for ticket in tickets)
                 )
-            cancel_unpaid_booking.apply_async(args=[booking.id], countdown=1800)
-            tickets.update(ticket_status = "BOOKED", booking=booking, passenger_name = user)
+            Ticket.objects.filter(id__in = existing_ids).update(
+                ticket_status = "BOOKED", booking=booking, passenger_name = user
+            )
+            transaction.on_commit(
+                lambda: cancel_unpaid_booking.apply_async(
+                    args=[booking.id],
+                    countdown=int(BOOKING_PAYMENT_WINDOW.total_seconds())
+                )
+            )
             logger.info(f"Booking with id:{booking.id} successfuly created by: {user}")
             return booking
     except Exception:
         logger.exception(
-            f"Failed to create booking with id {booking.id}"
+            f"Failed to create booking for tickets {ticket_ids}"
         )
         raise
     
@@ -72,10 +91,10 @@ def create_booking(user, ticket_ids: list) -> Booking:
 def cancel_booking(user, booking_id: int) -> Booking:
     try:
         with transaction.atomic():
-            booking = Booking.objects.get(id = booking_id)
-            logger.info(f"User {user} started to cancel booking with id: {booking.id} ")
+            booking = Booking.objects.select_for_update().filter(id = booking_id).first()
+            logger.info(f"User {user} started to cancel booking with id: {booking_id} ")
             if booking is None:
-                raise NotFound(f"Booking {booking.id} not found")
+                raise NotFound(f"Booking {booking_id} not found")
             if booking.user != user:
                 raise PermissionDenied(f'This booking_id does not belong to user {user}')
             if booking.status == "CANCELLED":
@@ -89,5 +108,5 @@ def cancel_booking(user, booking_id: int) -> Booking:
 
             return booking
     except Exception:
-        logger.exception(f"Failed to cancel booking with id {booking.id}")
+        logger.exception(f"Failed to cancel booking with id {booking_id}")
         raise

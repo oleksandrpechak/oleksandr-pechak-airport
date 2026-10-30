@@ -10,6 +10,8 @@ from rest_framework.viewsets import mixins
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
+from rest_framework import serializers
+from drf_spectacular.utils import extend_schema, inline_serializer
 import logging
 
 
@@ -25,6 +27,8 @@ class ConversationViewSet(
     serializer_class = ConversationSerializer
     
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Conversation.objects.none()
         return Conversation.objects.filter(user=self.request.user)
     
     def perform_create(self, serializer):
@@ -35,6 +39,10 @@ class ChatAPIView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'chat'
 
+    @extend_schema(
+        request=inline_serializer("ChatMessageRequest", {"content": serializers.CharField()}),
+        responses=inline_serializer("ChatMessageResponse", {"response": serializers.CharField()}),
+    )
     def post(self, request):
         content = request.data.get('content')
         if not content:

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Airline, Airplane, Airport, AirplaneSeat, FleetItem
 from .services.airplane_seat_service import create_airplane_with_seats
+from django.utils import timezone
 
 class AirplaneSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,15 +25,23 @@ class AirplaneSeatSerializer(serializers.ModelSerializer):
         fields = ["id", "airplane", "row", "seat", "class_type" ]
 
 class AirlineSerializer(serializers.ModelSerializer):
-    founded_year = serializers.DateField()
     class Meta:
         model = Airline
         fields = ["id", "name", "is_active", "founded_year"]
 
+    def validate_founded_year(self, value):
+        if value is not None and not 1900 <= value <= timezone.now().year:
+            raise serializers.ValidationError(
+                f"Founded year must be between 1900 and {timezone.now().year}."
+            )
+        return value
+
 class AirportSerializer(serializers.ModelSerializer):
+    city_name = serializers.CharField(source="city.city", read_only=True)
+    country_code = serializers.CharField(source="city.country.code", read_only=True)
     class Meta:
         model = Airport
-        fields = ["id", "name", "iata_code", "city", "airline"]
+        fields = ["id", "name", "iata_code", "city", "city_name", "country_code", "airline"]
 
 class FleetItemSerializer(serializers.ModelSerializer):
     class Meta:

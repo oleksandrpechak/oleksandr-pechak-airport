@@ -45,16 +45,92 @@ class PaymentViewTest(APITestCase):
         response = self.client.post(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     @patch("payments.views.create_checkout_session")
-    def test_duplicate_payment_returns_400(self, mock_create_checkout_session):
+    def test_completed_payment_returns_400(self, mock_create_checkout_session):
+        Payment.objects.create(
+            booking=self.booking,
+            stripe_session_id="cs_existing",
+            amount=Decimal("100.00"),
+            status=Payment.PaymentStatus.COMPLETED
+        )
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        mock_create_checkout_session.assert_not_called()
+    @patch("payments.views.create_checkout_session")
+    def test_other_users_booking_returns_404(self, mock_create_checkout_session):
+        other = User.objects.create_user(email="other@us.com", password="testpass123")
+        self.client.force_authenticate(user=other)
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        mock_create_checkout_session.assert_not_called()
+        self.assertFalse(Payment.objects.filter(booking=self.booking).exists())
+    @patch("payments.views.create_checkout_session")
+    def test_cancelled_booking_returns_400(self, mock_create_checkout_session):
+        self.booking.status = Booking.BookingStatus.CANCELLED
+        self.booking.save()
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        mock_create_checkout_session.assert_not_called()
+    @patch("payments.views.create_checkout_session")
+    def test_confirmed_booking_returns_400(self, mock_create_checkout_session):
+        self.booking.status = Booking.BookingStatus.CONFIRMED
+        self.booking.save()
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        mock_create_checkout_session.assert_not_called()
+    @patch("payments.views.retrieve_checkout_session")
+    @patch("payments.views.create_checkout_session")
+    def test_pending_payment_with_open_session_returns_same_url(
+        self, mock_create_checkout_session, mock_retrieve_checkout_session
+    ):
         Payment.objects.create(
             booking=self.booking,
             stripe_session_id="cs_existing",
             amount=Decimal("100.00"),
             status=Payment.PaymentStatus.PENDING
         )
+        mock_session = MagicMock()
+        mock_session.status = "open"
+        mock_session.url = "https://checkout.stripe.com/existing-session"
+        mock_retrieve_checkout_session.return_value = mock_session
+
         response = self.client.post(self.url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["chekout_url"], "https://checkout.stripe.com/existing-session"
+        )
+        mock_retrieve_checkout_session.assert_called_once_with("cs_existing")
         mock_create_checkout_session.assert_not_called()
+        self.assertEqual(Payment.objects.filter(booking=self.booking).count(), 1)
+    @patch("payments.views.retrieve_checkout_session")
+    @patch("payments.views.create_checkout_session")
+    def test_pending_payment_with_expired_session_creates_new_session(
+        self, mock_create_checkout_session, mock_retrieve_checkout_session
+    ):
+        Payment.objects.create(
+            booking=self.booking,
+            stripe_session_id="cs_existing",
+            amount=Decimal("100.00"),
+            status=Payment.PaymentStatus.PENDING
+        )
+        expired_session = MagicMock()
+        expired_session.status = "expired"
+        mock_retrieve_checkout_session.return_value = expired_session
+        new_session = MagicMock()
+        new_session.id = "cs_new"
+        new_session.url = "https://checkout.stripe.com/new-session"
+        mock_create_checkout_session.return_value = new_session
+
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["chekout_url"], "https://checkout.stripe.com/new-session"
+        )
+        mock_create_checkout_session.assert_called_once()
+        self.assertEqual(Payment.objects.filter(booking=self.booking).count(), 1)
+        payment = Payment.objects.get(booking=self.booking)
+        self.assertEqual(payment.stripe_session_id, "cs_new")
+        self.assertEqual(payment.amount, self.booking.total_price)
+        self.assertEqual(payment.status, Payment.PaymentStatus.PENDING)
 
 
 
@@ -87,6 +163,7 @@ class PaymentWebhookViewTests(APITestCase):
             "type": "checkout.session.completed",
             "data": {
                 "object": {
+                    "id": "cs_test_123",
                     "metadata": {
                         "booking_id": self.booking.id
                     }
@@ -97,7 +174,7 @@ class PaymentWebhookViewTests(APITestCase):
             self.url,
             data={},
             format='json',
-            HTTP_STRIPE_RESPONSE="test_signature"
+            HTTP_STRIPE_SIGNATURE="test_signature"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.booking.refresh_from_db()
@@ -112,6 +189,7 @@ class PaymentWebhookViewTests(APITestCase):
             "type": "checkout.session.expired",
             "data": {
                 "object": {
+                    "id": "cs_test_123",
                     "metadata": {
                         "booking_id": self.booking.id
                     }
@@ -122,7 +200,7 @@ class PaymentWebhookViewTests(APITestCase):
             self.url,
             data={},
             format='json',
-            HTTP_STRIPE_RESPONSE="test_signature"
+            HTTP_STRIPE_SIGNATURE="test_signature"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.booking.refresh_from_db()
@@ -140,6 +218,7 @@ class PaymentWebhookViewTests(APITestCase):
             "type": "checkout.session.completed",
             "data": {
                 "object": {
+                    "id": "cs_test_123",
                     "metadata": {
                         "booking_id": self.booking.id
                     }
@@ -159,3 +238,87 @@ class PaymentWebhookViewTests(APITestCase):
         mock_send_ticket_email_delay.assert_called_once_with(
             self.booking.user.email
         )
+    def _post_event(self, mock_construct_event, event_type, booking_id, session_id="cs_test_123"):
+        mock_construct_event.return_value = {
+            "type": event_type,
+            "data": {
+                "object": {
+                    "id": session_id,
+                    "metadata": {
+                        "booking_id": booking_id
+                    }
+                }
+            }
+        }
+        return self.client.post(
+            self.url,
+            data={},
+            format="json",
+            HTTP_STRIPE_SIGNATURE="test_signature",
+        )
+
+    @patch("payments.views.stripe.Webhook.construct_event")
+    def test_webhook_unknown_booking_returns_200(self, mock_construct_event):
+        response = self._post_event(
+            mock_construct_event, "checkout.session.completed", 999999
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @patch("payments.views.send_ticket_email.delay")
+    @patch("payments.views.stripe.Webhook.construct_event")
+    def test_webhook_completed_does_not_confirm_cancelled_booking(
+        self, mock_construct_event, mock_send_ticket_email_delay,
+    ):
+        self.booking.status = Booking.BookingStatus.CANCELLED
+        self.booking.save()
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self._post_event(
+                mock_construct_event, "checkout.session.completed", self.booking.id
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.booking.refresh_from_db()
+        self.payment.refresh_from_db()
+        self.assertEqual(self.booking.status, Booking.BookingStatus.CANCELLED)
+        self.assertEqual(self.payment.status, Payment.PaymentStatus.PENDING)
+        tickets = Ticket.objects.filter(id__in=self.ticket_ids)
+        self.assertFalse(any(ticket.ticket_status == Ticket.TicketStatus.PAID for ticket in tickets))
+        mock_send_ticket_email_delay.assert_not_called()
+
+    @patch("payments.views.send_ticket_email.delay")
+    @patch("payments.views.stripe.Webhook.construct_event")
+    def test_webhook_repeated_completed_sends_one_email(
+        self, mock_construct_event, mock_send_ticket_email_delay,
+    ):
+        with self.captureOnCommitCallbacks(execute=True):
+            self._post_event(
+                mock_construct_event, "checkout.session.completed", self.booking.id
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self._post_event(
+                mock_construct_event, "checkout.session.completed", self.booking.id
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_ticket_email_delay.assert_called_once()
+
+    @patch("payments.views.stripe.Webhook.construct_event")
+    def test_webhook_expired_stale_session_keeps_booking(self, mock_construct_event):
+        response = self._post_event(
+            mock_construct_event, "checkout.session.expired", self.booking.id,
+            session_id="cs_old_session",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.booking.refresh_from_db()
+        self.payment.refresh_from_db()
+        self.assertEqual(self.booking.status, Booking.BookingStatus.PENDING)
+        self.assertEqual(self.payment.status, Payment.PaymentStatus.PENDING)
+
+    @patch("payments.views.stripe.Webhook.construct_event")
+    def test_webhook_expired_does_not_cancel_confirmed_booking(self, mock_construct_event):
+        self.booking.status = Booking.BookingStatus.CONFIRMED
+        self.booking.save()
+        response = self._post_event(
+            mock_construct_event, "checkout.session.expired", self.booking.id
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, Booking.BookingStatus.CONFIRMED)

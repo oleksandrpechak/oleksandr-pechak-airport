@@ -44,12 +44,12 @@ class CityViewSet(viewsets.ModelViewSet):
     ]
     search_fields = [
         "city",
-        "country",
+        "country__country",
     ]
 
     ordering_fields = [
         "city",
-        "country",
+        "country__country",
     ]
 
 

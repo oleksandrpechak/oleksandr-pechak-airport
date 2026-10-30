@@ -25,3 +25,7 @@ def create_checkout_session(booking):
         expires_at=int((timezone.now() + timedelta(minutes=30)).timestamp())
     )
     return session
+
+
+def retrieve_checkout_session(session_id):
+    return stripe.checkout.Session.retrieve(session_id)
